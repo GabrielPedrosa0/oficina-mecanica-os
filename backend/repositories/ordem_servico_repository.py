@@ -44,3 +44,9 @@ def existe_do_veiculo(veiculo_id: int):
 
 def listar_por_veiculos(veiculo_ids):
     return [o for o in ordens.values() if o["veiculo_id"] in veiculo_ids]
+
+
+# --- Painel (dashboard) ---
+# OS cujo status é um dos informados. Ex.: listar_por_status("EM_SERVICO", "PRONTA").
+def listar_por_status(*status):
+    return [o for o in ordens.values() if o["status"] in status]
