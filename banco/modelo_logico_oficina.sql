@@ -1,6 +1,8 @@
--- Modelo lógico da oficina (PostgreSQL) - versão 4
--- Mudanças da v4: endereco ganha id próprio (id_endereco); cliente aponta para ele
--- por id_endereco; quantidade é integer em os_pecas e os_servicos; nenhuma data usa fuso horário.
+-- Modelo lógico da oficina (PostgreSQL) - versão 5
+-- Mudanças da v5: a tabela endereco deixa de existir; o endereço vira colunas de cliente
+-- (cep, logradouro, numero, complemento, bairro, cidade, uf). A busca por CEP é feita
+-- numa API externa (ViaCEP), não no banco.
+-- Mantido da v4: quantidade é integer em os_pecas e os_servicos; nenhuma data usa fuso horário.
 -- Gerado a partir do modelo conceitual (modelo_relacional_oficina.drawio, página "Oficina · conceitual, sem especialidade")
 -- e da versão em andamento model.pgerd (cliente, veiculo, os, peca, os_pecas).
 --
@@ -12,20 +14,6 @@
 BEGIN;
 
 -- ---------------------------------------------------------------
--- Endereço (tem id próprio; o CEP é só uma coluna comum)
--- ---------------------------------------------------------------
-CREATE TABLE endereco (
-    id_endereco  serial        PRIMARY KEY,
-    cep          char(8)       NOT NULL,
-    rua          varchar(120)  NOT NULL,
-    bairro       varchar(80),
-    cidade       varchar(80)   NOT NULL,
-    uf           char(2)       NOT NULL,
-    CONSTRAINT ck_endereco_cep CHECK (cep ~ '^[0-9]{8}$'),
-    CONSTRAINT ck_endereco_uf  CHECK (uf ~ '^[A-Z]{2}$')
-);
-
--- ---------------------------------------------------------------
 -- Cliente
 -- ---------------------------------------------------------------
 CREATE TABLE cliente (
@@ -35,15 +23,19 @@ CREATE TABLE cliente (
     telefone              varchar(20)   NOT NULL,
     email                 varchar(120),
     cliente_desde         date          NOT NULL DEFAULT CURRENT_DATE,
-    id_endereco           integer,
-    numero_endereco       varchar(10),
-    complemento_endereco  varchar(60),
+    cep                   char(8),
+    logradouro            varchar(120),
+    numero                varchar(10),
+    complemento           varchar(60),
+    bairro                varchar(80),
+    cidade                varchar(80),
+    uf                    char(2),
     CONSTRAINT uq_cliente_cpf_cnpj UNIQUE (cpf_cnpj),
     CONSTRAINT uq_cliente_email    UNIQUE (email),
     CONSTRAINT ck_cliente_cpf_cnpj CHECK (cpf_cnpj ~ '^([0-9]{11}|[0-9]{14})$'),
     CONSTRAINT ck_cliente_email    CHECK (email LIKE '%_@_%'),
-    CONSTRAINT fk_cliente_endereco FOREIGN KEY (id_endereco)
-        REFERENCES endereco (id_endereco) ON UPDATE CASCADE ON DELETE RESTRICT
+    CONSTRAINT ck_cliente_cep      CHECK (cep ~ '^[0-9]{8}$'),
+    CONSTRAINT ck_cliente_uf       CHECK (uf ~ '^[A-Z]{2}$')
 );
 
 -- ---------------------------------------------------------------
@@ -197,7 +189,6 @@ CREATE TABLE usuario (
 -- ---------------------------------------------------------------
 -- Índices nas chaves estrangeiras (o PostgreSQL não cria sozinho)
 -- ---------------------------------------------------------------
-CREATE INDEX ix_cliente_endereco      ON cliente (id_endereco);
 CREATE INDEX ix_veiculo_cliente       ON veiculo (id_cliente);
 CREATE INDEX ix_os_veiculo            ON os (id_veiculo);
 CREATE INDEX ix_os_mecanico           ON os (id_mecanico);
