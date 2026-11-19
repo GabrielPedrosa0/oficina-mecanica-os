@@ -53,7 +53,7 @@ def test_consultar_atualizar_e_404(client, cliente, veiculo):
 
 def test_excluir_cliente_com_veiculo_409(client, cliente, veiculo):
     assert client.delete(f"/api/clientes/{cliente['id']}").status_code == 409
-    veiculo_repository.excluir(veiculo["id"])
+    veiculo_repository.veiculos.clear()
     assert client.delete(f"/api/clientes/{cliente['id']}").status_code == 204
     assert client.delete(f"/api/clientes/{cliente['id']}").status_code == 404
 
@@ -71,21 +71,3 @@ def test_historico_do_cliente(client, cliente, os_corpo):
     r = client.get(f"/api/clientes/{cliente['id']}/historico")
     assert [o["id"] for o in r.json()] == [2, 1]
     assert client.get("/api/clientes/99/historico").status_code == 404
-
-
-def test_cliente_com_cpf_e_endereco(client):
-    r = client.post("/api/clientes", json={"nome": "Ana", "telefone": "85900000003", "cpf_cnpj": "123.456.789-01",
-                                           "cep": "60000-000", "logradouro": "Rua A", "numero": "10",
-                                           "bairro": "Centro", "cidade": "Fortaleza", "uf": "ce"})
-    assert r.status_code == 201
-    c = r.json()
-    assert (c["cpf_cnpj"], c["cep"], c["uf"]) == ("12345678901", "60000000", "CE")
-    repetido = client.post("/api/clientes", json={"nome": "Bia", "telefone": "85900000004",
-                                                  "cpf_cnpj": "12345678901"})
-    assert repetido.status_code == 409
-
-
-@pytest.mark.parametrize("campo, valor", [("cpf_cnpj", "123"), ("cep", "600"), ("uf", "C1")])
-def test_cpf_cep_ou_uf_invalido_422(client, campo, valor):
-    r = client.post("/api/clientes", json={"nome": "Ana", "telefone": "85900000003", campo: valor})
-    assert r.status_code == 422

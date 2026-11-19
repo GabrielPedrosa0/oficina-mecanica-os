@@ -35,33 +35,8 @@ def validar_cliente(entrada: Cliente, id: int | None = None):
         if repetido is not None and repetido["id"] != id:
             raise HTTPException(status_code=409, detail="Já existe um cliente com esse e-mail.")
 
-    # CPF (11 dígitos) ou CNPJ (14 dígitos), gravado só com os números.
-    cpf_cnpj = limpar(entrada.cpf_cnpj)
-    if cpf_cnpj is not None:
-        cpf_cnpj = re.sub(r"\D", "", cpf_cnpj)
-        if len(cpf_cnpj) not in (11, 14):
-            raise HTTPException(status_code=422, detail="CPF/CNPJ inválido. Use 11 ou 14 dígitos.")
-        repetido = cliente_repository.buscar_por_cpf_cnpj(cpf_cnpj)
-        if repetido is not None and repetido["id"] != id:
-            raise HTTPException(status_code=409, detail="Já existe um cliente com esse CPF/CNPJ.")
-
-    # Endereço (opcional). CEP com 8 dígitos e UF com 2 letras maiúsculas, como pede o banco.
-    cep = limpar(entrada.cep)
-    if cep is not None:
-        cep = re.sub(r"\D", "", cep)
-        if len(cep) != 8:
-            raise HTTPException(status_code=422, detail="CEP inválido. Use 8 dígitos, ex.: 60000-000.")
-    uf = limpar(entrada.uf)
-    if uf is not None:
-        uf = uf.upper()
-        if not re.fullmatch(r"[A-Z]{2}", uf):
-            raise HTTPException(status_code=422, detail="UF inválida. Use a sigla do estado, ex.: CE.")
-
-    return {"nome": nome, "cpf_cnpj": cpf_cnpj, "telefone": telefone, "email": email,
-            "cliente_desde": entrada.cliente_desde or date.today(),
-            "cep": cep, "logradouro": limpar(entrada.logradouro), "numero": limpar(entrada.numero),
-            "complemento": limpar(entrada.complemento), "bairro": limpar(entrada.bairro),
-            "cidade": limpar(entrada.cidade), "uf": uf}
+    return {"nome": nome, "telefone": telefone, "email": email,
+            "cliente_desde": entrada.cliente_desde or date.today()}
 
 
 # Devolve o cliente, ou responde 404 se não existe nenhum com esse id.

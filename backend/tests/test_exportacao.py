@@ -1,10 +1,6 @@
-from tests.conftest import cobrar
-
-
 def test_exportar_csv(client, os_corpo):
     client.post("/api/ordens-servico", json={**os_corpo, "problema_relatado": "=HYPERLINK(\"http://x\")"})
     client.post("/api/ordens-servico", json={**os_corpo, "status": "ENTREGUE"})
-    cobrar(2, 340)
     r = client.get("/api/ordens-servico/exportar")  # não pode ser lido como {id}
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/csv")

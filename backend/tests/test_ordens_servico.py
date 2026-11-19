@@ -1,7 +1,7 @@
 import pytest
 
 from repositories import ordem_servico_repository
-from tests.conftest import cobrar, novo_veiculo
+from tests.conftest import novo_veiculo
 
 
 def test_criar_os_devolve_dados_do_veiculo_e_do_cliente(client, os_corpo):
@@ -9,10 +9,6 @@ def test_criar_os_devolve_dados_do_veiculo_e_do_cliente(client, os_corpo):
     assert r.status_code == 201
     os_ = r.json()
     assert os_["id"] == 1
-    assert os_["mecanico"] == "Rafael"
-    assert os_["valor_total"] == 0  # ainda sem peças e serviços
-    cobrar(1, 340)
-    os_ = client.get("/api/ordens-servico/1").json()
     assert os_["placa"] == "QRS4F21"
     assert os_["veiculo"] == "Volkswagen Gol 1.6"
     assert os_["cliente_nome"] == "Marina Souza"
@@ -34,7 +30,7 @@ def test_criar_os_usa_valores_padrao(client, veiculo):
     ({"veiculo_id": 999}, "Veículo não encontrado"),
     ({"problema_relatado": "   "}, "problema relatado"),
     ({"quilometragem": -1}, "quilometragem"),
-    ({"mecanico_id": 999}, "Mecânico não encontrado"),
+    ({"valor_total": -5}, "valor total"),
     ({"data_conclusao": "2026-11-10T08:00:00"}, "conclusão"),
     ({"data_previsao": "2026-11-10T08:00:00"}, "previsão"),
     ({"data_abertura": "2026-11-11T08:10:00Z"}, "fuso horário"),
@@ -96,7 +92,7 @@ def test_repositorio_informa_se_o_veiculo_tem_ordens(client, os_corpo, veiculo):
 def test_filtros_da_listagem(client, os_corpo):
     client.post("/api/ordens-servico", json=os_corpo)
     outro = client.post("/api/clientes", json={"nome": "Luís Araújo", "telefone": "85900000006"}).json()
-    carro = novo_veiculo("BCD8N45", "Toyota", "Corolla", outro["id"])
+    carro = novo_veiculo(2, "BCD8N45", "Toyota", "Corolla", outro["id"])
     client.post("/api/ordens-servico", json={**os_corpo, "veiculo_id": carro["id"], "status": "ENTREGUE"})
 
     def ids(query):
