@@ -1,11 +1,10 @@
 # Regras de negócio das ordens de serviço.
-import math
 from datetime import datetime
 
 from fastapi import HTTPException
 
 from core.texto import limpar, normalizar, placa_confere
-from repositories import cliente_repository, ordem_servico_repository, veiculo_repository
+from repositories import cliente_repository, mecanico_repository, ordem_servico_repository, veiculo_repository
 from schemas.ordem_servico_schema import OrdemServico
 
 
@@ -22,11 +21,11 @@ def validar_ordem(entrada: OrdemServico, atual=None):
 
     # Sem quilometragem na OS, vale a do cadastro do veículo.
     km = entrada.quilometragem if entrada.quilometragem is not None else veiculo["quilometragem"]
-    if km < 0:
+    if km is not None and km < 0:
         raise HTTPException(status_code=422, detail="A quilometragem não pode ser negativa.")
 
-    if not math.isfinite(entrada.valor_total) or entrada.valor_total < 0:
-        raise HTTPException(status_code=422, detail="O valor total não pode ser negativo.")
+    if entrada.mecanico_id is not None and mecanico_repository.buscar(entrada.mecanico_id) is None:
+        raise HTTPException(status_code=422, detail="Mecânico não encontrado.")
 
     for data in (entrada.data_abertura, entrada.data_previsao, entrada.data_conclusao):
         if data is not None and data.tzinfo is not None:
@@ -49,16 +48,15 @@ def validar_ordem(entrada: OrdemServico, atual=None):
 
     return {
         "veiculo_id": entrada.veiculo_id,
+        "mecanico_id": entrada.mecanico_id,
         "quilometragem": km,
         "problema_relatado": problema,
-        "servico": limpar(entrada.servico),
-        "mecanico": limpar(entrada.mecanico),
+        "eh_garantia": entrada.eh_garantia,
         "data_abertura": abertura,
         "data_previsao": entrada.data_previsao,
         "data_conclusao": entrada.data_conclusao,
         "status": entrada.status,
         "observacoes": limpar(entrada.observacoes),
-        "valor_total": round(entrada.valor_total, 2),
     }
 
 

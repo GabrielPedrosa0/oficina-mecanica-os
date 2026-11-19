@@ -1,58 +1,83 @@
-# Veículos em memória (dicionário que liga o id ao veículo). Somem quando o servidor
-# reinicia. O banco de dados vem depois.
-#
-# ATENÇÃO, Integrante 1: este arquivo é seu. Aqui está só o MÍNIMO que as ordens de
-# serviço, os clientes e a busca precisam LER. Complete com criar, atualizar e excluir,
-# mantendo o dicionário `veiculos` e as funções abaixo (outros módulos chamam elas).
-from core.texto import placa_confere
+# Veículos gravados no PostgreSQL (tabela veiculo).
+# Apelidos para a API: id_veiculo vira "id", km_atual vira "quilometragem"
+# e id_cliente vira "cliente_id".
+from database.connection import conectar
 
-veiculos = {}
-proximo_id = 1
+COLUNAS = """id_veiculo AS id, placa, chassi, marca, modelo, ano,
+             km_atual AS quilometragem, id_cliente AS cliente_id"""
 
 
 def reiniciar():
-    global proximo_id
-    veiculos.clear()
-    proximo_id = 1
+    with conectar() as conexao:
+        conexao.execute("TRUNCATE veiculo RESTART IDENTITY CASCADE")
 
 
 def listar():
-    return list(veiculos.values())
+    with conectar() as conexao:
+        return conexao.execute(f"SELECT {COLUNAS} FROM veiculo ORDER BY id_veiculo").fetchall()
 
 
-def buscar(id: int):
-    return veiculos.get(id)
+def buscar(id: int | None):
+    if id is None:
+        return None
+    with conectar() as conexao:
+        return conexao.execute(f"SELECT {COLUNAS} FROM veiculo WHERE id_veiculo = %s", (id,)).fetchone()
 
 
 # Veículos cuja placa contém o texto buscado (para GET /api/veiculos?placa=).
+# "qrs-4f" acha QRS4F21: tiramos tudo que não é letra ou número e passamos para maiúsculas.
 def listar_por_placa(placa: str):
-    return [v for v in veiculos.values() if placa_confere(v["placa"], placa)]
+    busca = "".join(c for c in placa.upper() if c.isalnum())
+    if busca == "":
+        return []
+    with conectar() as conexao:
+        return conexao.execute(
+            f"SELECT {COLUNAS} FROM veiculo WHERE placa LIKE %s ORDER BY id_veiculo",
+            (f"%{busca}%",),
+        ).fetchall()
 
 
 def listar_por_cliente(cliente_id: int):
-    return [v for v in veiculos.values() if v.get("cliente_id") == cliente_id]
-
-
-def criar(dados: dict):
-    global proximo_id
-    veiculo = {"id": proximo_id, **dados}
-    veiculos[proximo_id] = veiculo
-    proximo_id += 1
-    return veiculo
-
-
-def atualizar(id: int, dados: dict):
-    veiculo = {"id": id, **dados}
-    veiculos[id] = veiculo
-    return veiculo
-
-
-def excluir(id: int):
-    del veiculos[id]
+    with conectar() as conexao:
+        return conexao.execute(
+            f"SELECT {COLUNAS} FROM veiculo WHERE id_cliente = %s ORDER BY id_veiculo", (cliente_id,)
+        ).fetchall()
 
 
 def buscar_por_placa(placa: str):
-    for veiculo in veiculos.values():
-        if veiculo["placa"] == placa:
-            return veiculo
-    return None
+    with conectar() as conexao:
+        return conexao.execute(f"SELECT {COLUNAS} FROM veiculo WHERE placa = %s", (placa,)).fetchone()
+
+
+def buscar_por_chassi(chassi: str):
+    with conectar() as conexao:
+        return conexao.execute(f"SELECT {COLUNAS} FROM veiculo WHERE chassi = %s", (chassi,)).fetchone()
+
+
+def criar(dados: dict):
+    with conectar() as conexao:
+        return conexao.execute(
+            f"""INSERT INTO veiculo (placa, chassi, marca, modelo, ano, km_atual, id_cliente)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING {COLUNAS}""",
+            (dados["placa"], dados.get("chassi"), dados["marca"], dados["modelo"], dados.get("ano"),
+             dados.get("quilometragem"), dados["cliente_id"]),
+        ).fetchone()
+
+
+def atualizar(id: int, dados: dict):
+    with conectar() as conexao:
+        return conexao.execute(
+            f"""UPDATE veiculo
+                   SET placa = %s, chassi = %s, marca = %s, modelo = %s, ano = %s,
+                       km_atual = %s, id_cliente = %s
+                 WHERE id_veiculo = %s
+             RETURNING {COLUNAS}""",
+            (dados["placa"], dados.get("chassi"), dados["marca"], dados["modelo"], dados.get("ano"),
+             dados.get("quilometragem"), dados["cliente_id"], id),
+        ).fetchone()
+
+
+def excluir(id: int):
+    with conectar() as conexao:
+        conexao.execute("DELETE FROM veiculo WHERE id_veiculo = %s", (id,))

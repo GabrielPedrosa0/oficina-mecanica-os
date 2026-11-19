@@ -52,7 +52,7 @@ def resumir(texto):
 
 
 # A OS completa (placa, veículo, cliente) mais o resumo do serviço.
-# Quando os itens da OS (3.3) existirem, o resumo pode passar a ser o primeiro item.
+# "servico" é o primeiro serviço incluído na OS (tabela os_servicos), se houver.
 def ordem_do_painel(ordem):
     completa = ordem_servico_service.ordem_completa(ordem)
     return {**completa, "servico_resumo": resumir(completa["servico"] or completa["problema_relatado"])}

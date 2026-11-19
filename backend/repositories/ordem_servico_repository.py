@@ -1,52 +1,92 @@
-# Ordens de serviço em memória (dicionário que liga o id à ordem). Somem quando o
-# servidor reinicia. O banco de dados vem depois.
-ordens = {}
-proximo_id = 1
+# Ordens de serviço gravadas no PostgreSQL (tabela os).
+# Apelidos para a API: id_os vira "id", id_veiculo vira "veiculo_id", km_entrada vira
+# "quilometragem". Na leitura vêm junto:
+#   - "mecanico": o nome do mecânico (LEFT JOIN, porque a OS pode estar sem mecânico);
+#   - "servico": a descrição do primeiro serviço incluído na OS (ou null);
+#   - "valor_total": a soma de peças e serviços, calculada pela visão vw_os_total.
+from database.connection import conectar
+
+SELECT_OS = """
+    SELECT o.id_os AS id, o.id_veiculo AS veiculo_id, o.id_mecanico AS mecanico_id,
+           m.nome AS mecanico, o.km_entrada AS quilometragem, o.problema_relatado,
+           o.eh_garantia, o.data_abertura, o.data_previsao, o.data_conclusao, o.status,
+           o.observacoes, o.orcamento_enviado_em,
+           (SELECT s.descricao FROM os_servicos x JOIN servico s ON s.id_servico = x.id_servico
+             WHERE x.id_os = o.id_os ORDER BY s.descricao LIMIT 1) AS servico,
+           t.valor_total::float AS valor_total
+      FROM os o
+      LEFT JOIN mecanico m ON m.id_mecanico = o.id_mecanico
+      JOIN vw_os_total t ON t.id_os = o.id_os
+"""
 
 
 def reiniciar():
-    global proximo_id
-    ordens.clear()
-    proximo_id = 1
+    with conectar() as conexao:
+        conexao.execute("TRUNCATE os RESTART IDENTITY CASCADE")
 
 
 def listar():
-    return list(ordens.values())
+    with conectar() as conexao:
+        return conexao.execute(SELECT_OS + " ORDER BY o.id_os").fetchall()
 
 
 def buscar(id: int):
-    return ordens.get(id)
+    with conectar() as conexao:
+        return conexao.execute(SELECT_OS + " WHERE o.id_os = %s", (id,)).fetchone()
 
 
 def criar(dados: dict):
-    global proximo_id
-    ordem = {"id": proximo_id, **dados}
-    ordens[proximo_id] = ordem
-    proximo_id += 1
-    return ordem
+    with conectar() as conexao:
+        linha = conexao.execute(
+            """INSERT INTO os (id_veiculo, id_mecanico, km_entrada, problema_relatado, eh_garantia,
+                               data_abertura, data_previsao, data_conclusao, status, observacoes)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+               RETURNING id_os""",
+            (dados["veiculo_id"], dados["mecanico_id"], dados["quilometragem"], dados["problema_relatado"],
+             dados["eh_garantia"], dados["data_abertura"], dados["data_previsao"], dados["data_conclusao"],
+             dados["status"], dados["observacoes"]),
+        ).fetchone()
+    return buscar(linha["id_os"])
 
 
 def atualizar(id: int, dados: dict):
-    ordem = {"id": id, **dados}
-    ordens[id] = ordem
-    return ordem
+    with conectar() as conexao:
+        conexao.execute(
+            """UPDATE os
+                  SET id_veiculo = %s, id_mecanico = %s, km_entrada = %s, problema_relatado = %s,
+                      eh_garantia = %s, data_abertura = %s, data_previsao = %s,
+                      data_conclusao = %s, status = %s, observacoes = %s
+                WHERE id_os = %s""",
+            (dados["veiculo_id"], dados["mecanico_id"], dados["quilometragem"], dados["problema_relatado"],
+             dados["eh_garantia"], dados["data_abertura"], dados["data_previsao"], dados["data_conclusao"],
+             dados["status"], dados["observacoes"], id),
+        )
+    return buscar(id)
 
 
+# Apaga a OS. As peças, serviços e apontamentos dela saem junto (ON DELETE CASCADE).
 def excluir(id: int):
-    del ordens[id]
+    with conectar() as conexao:
+        conexao.execute("DELETE FROM os WHERE id_os = %s", (id,))
 
 
-# True se o veículo tem alguma ordem. O Integrante 1 usa isto no DELETE /api/veiculos/{id}
-# para responder 409 ("não é possível excluir: o veículo possui ordens de serviço").
+# True se o veículo tem alguma ordem. Usado no DELETE /api/veiculos/{id} (responde 409).
 def existe_do_veiculo(veiculo_id: int):
-    return any(o["veiculo_id"] == veiculo_id for o in ordens.values())
+    with conectar() as conexao:
+        linha = conexao.execute("SELECT EXISTS (SELECT 1 FROM os WHERE id_veiculo = %s) AS existe",
+                                (veiculo_id,)).fetchone()
+    return linha["existe"]
 
 
 def listar_por_veiculos(veiculo_ids):
-    return [o for o in ordens.values() if o["veiculo_id"] in veiculo_ids]
+    with conectar() as conexao:
+        return conexao.execute(SELECT_OS + " WHERE o.id_veiculo = ANY(%s) ORDER BY o.id_os",
+                               (list(veiculo_ids),)).fetchall()
 
 
 # --- Painel (dashboard) ---
 # OS cujo status é um dos informados. Ex.: listar_por_status("EM_SERVICO", "PRONTA").
 def listar_por_status(*status):
-    return [o for o in ordens.values() if o["status"] in status]
+    with conectar() as conexao:
+        return conexao.execute(SELECT_OS + " WHERE o.status = ANY(%s) ORDER BY o.id_os",
+                               (list(status),)).fetchall()
