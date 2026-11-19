@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from routers import clientes, dashboard, ordens_servico
 from services import dashboard_service
+from tests.conftest import cobrar
 
 AGORA = datetime(2026, 11, 11, 10, 0)
 
@@ -25,9 +26,12 @@ def dia_fixo(monkeypatch):
     monkeypatch.setattr(dashboard_service, "agora", lambda: AGORA)
 
 
-def nova_os(client, os_corpo, **mudancas):
+# valor_total e servico não vão no corpo da OS: viram um serviço incluído na OS.
+def nova_os(client, os_corpo, valor_total=None, servico=None, **mudancas):
     r = client.post("/api/ordens-servico", json={**os_corpo, **mudancas})
     assert r.status_code == 201, r.text
+    if valor_total is not None or servico is not None:
+        cobrar(r.json()["id"], valor_total or 0, servico)
     return r.json()
 
 
@@ -126,7 +130,7 @@ def test_limites_invalidos(client, url):
 
 
 def test_servico_longo_e_resumido(client, os_corpo):
-    nova_os(client, os_corpo, servico="Revisão completa " * 10)
+    nova_os(client, os_corpo, servico="Revisão completa " * 7)  # 119 letras (a coluna aceita 120)
     resumo = client.get("/api/dashboard/ordens-recentes").json()["itens"][0]["servico_resumo"]
     assert len(resumo) <= 60 and resumo.endswith("…")
 

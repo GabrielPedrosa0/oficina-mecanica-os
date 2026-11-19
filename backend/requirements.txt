@@ -1,1 +1,2 @@
 fastapi==0.162.4
+psycopg[binary]==3.3.9

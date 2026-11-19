@@ -27,20 +27,26 @@ class ResumoDashboard(BaseModel):
 
 # Uma OS como aparece nos cartões (celular) e na tabela (PC). É a mesma OS que
 # GET /api/ordens-servico devolve (herda os campos do schema da OS), mais o resumo do serviço.
+# mecanico, servico e valor_total vêm da leitura (nome do mecânico, primeiro serviço da OS
+# e soma da visão vw_os_total); não vão no corpo do POST.
 class OrdemPainel(OrdemServico):
     id: int
+    mecanico: str | None = None
+    servico: str | None = None
+    valor_total: float = 0
     placa: str | None = None
     veiculo: str = Field(description='Marca e modelo, ex.: "Volkswagen Gol 1.6".')
     cliente_id: int | None = None
     cliente_nome: str | None = None
     cliente_telefone: str | None = None
     servico_resumo: str = Field(
-        description="Texto da coluna Serviço: o campo servico ou, sem ele, o problema relatado, "
+        description="Texto da coluna Serviço: o primeiro serviço da OS ou, sem ele, o problema relatado, "
                     "cortado em 60 caracteres.")
 
 
 EXEMPLO_ORDEM = {
-    "id": 1042, "veiculo_id": 1, "quilometragem": 82300, "problema_relatado": "Barulho ao frear",
+    "id": 1042, "veiculo_id": 1, "mecanico_id": 1, "quilometragem": 82300,
+    "problema_relatado": "Barulho ao frear", "eh_garantia": False,
     "servico": "Troca de óleo e filtros", "mecanico": "Rafael",
     "data_abertura": "2026-11-11T08:10:00", "data_previsao": "2026-11-11T17:00:00", "data_conclusao": None,
     "status": "EM_SERVICO", "observacoes": None, "valor_total": 340.00,
