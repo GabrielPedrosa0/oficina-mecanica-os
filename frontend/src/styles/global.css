@@ -1,0 +1,241 @@
+/* Fontes instaladas pelo npm (@fontsource): funcionam sem internet. */
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/500.css';
+@import '@fontsource/barlow/600.css';
+@import '@fontsource/barlow-condensed/600.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--fonte-texto);
+  font-size: var(--texto-corpo);
+  line-height: var(--linha-corpo);
+  color: var(--texto-principal);
+  background: var(--fundo-pagina);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+img,
+svg {
+  display: block;
+}
+
+/* Foco visível e igual em todo o app (acessibilidade). */
+:focus-visible {
+  outline: 2px solid var(--borda-foco);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------
+   Classes de texto (Figma "Tipografia"). Use estas em vez de
+   escrever font-size solto nas telas.
+   --------------------------------------------------------------------- */
+.t-display {
+  font: 600 48px/52px var(--fonte-titulo);
+}
+.t-h1 {
+  font: 600 36px/40px var(--fonte-titulo);
+  margin: 0;
+}
+.t-h2 {
+  font: 600 28px/32px var(--fonte-titulo);
+  margin: 0;
+}
+.t-h3 {
+  font: 600 20px/28px var(--fonte-texto);
+  margin: 0;
+}
+.t-h4 {
+  font: 600 16px/24px var(--fonte-texto);
+  margin: 0;
+}
+.t-corpo-g {
+  font: 400 16px/24px var(--fonte-texto);
+}
+.t-corpo-m {
+  font: 400 14px/20px var(--fonte-texto);
+}
+.t-corpo-p {
+  font: 400 12px/16px var(--fonte-texto);
+}
+.t-rotulo {
+  font: 500 13px/16px var(--fonte-texto);
+}
+.t-valor {
+  font: 600 32px/36px var(--fonte-titulo);
+}
+.t-placa {
+  font: 500 14px/20px var(--fonte-mono);
+}
+.t-codigo {
+  font: 400 12px/16px var(--fonte-mono);
+}
+
+.texto-secundario {
+  color: var(--texto-secundario);
+}
+.texto-apoio {
+  color: var(--texto-apoio);
+}
+
+/* 
+   Utilitários
+*/
+
+/* Mostrar só no PC ou só no celular (mesmo corte do tokens.css). */
+@media (max-width: 899px) {
+  .so-pc {
+    display: none !important;
+  }
+}
+@media (min-width: 900px) {
+  .so-celular {
+    display: none !important;
+  }
+}
+
+/* Esconde visualmente, mas o leitor de tela continua lendo. */
+.so-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Conteúdo de uma página com a margem certa para PC e celular. */
+.pagina {
+  padding: var(--espaco-6) var(--margem-pagina) var(--espaco-10);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-6);
+  max-width: 1440px;
+}
+
+.pilha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-4);
+}
+
+.linha {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+}
+
+/* Título de uma seção dentro da página ("Ordens recentes", "Entregas de hoje"). */
+.titulo-secao {
+  margin: 0;
+  font: 600 24px/28px var(--fonte-titulo);
+  color: var(--texto-principal);
+}
+@media (max-width: 899px) {
+  .titulo-secao {
+    font: 600 18px/24px var(--fonte-texto);
+  }
+}
+
+.secao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+
+/* Título de seção com link à direita ("Ver todas", "Ver equipe"). */
+.cabecalho-secao {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espaco-3);
+}
+.link-secao {
+  font: 600 14px/20px var(--fonte-texto);
+  color: var(--texto-primario);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.link-secao:hover {
+  text-decoration: underline;
+}
+
+/* Grade responsiva dos indicadores: 4 colunas no PC, 2 no celular. */
+.grade-indicadores {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--espaco-4);
+}
+@media (max-width: 899px) {
+  .grade-indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--espaco-3);
+  }
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes brilho {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+/* Bloco cinza animado para "carregando" (esqueleto). */
+.esqueleto {
+  display: inline-block;
+  border-radius: var(--raio-p);
+  background: linear-gradient(90deg, var(--grafite-100) 0, var(--grafite-50) 50%, var(--grafite-100) 100%);
+  background-size: 200px 100%;
+  animation: brilho 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

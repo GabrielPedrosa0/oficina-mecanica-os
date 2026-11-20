@@ -1,0 +1,136 @@
+
+:root {
+  /* ---------- Paleta (não usar direto) ---------- */
+  --grafite-50: #f6f7f8;
+  --grafite-100: #eceef0;
+  --grafite-200: #dbdfe3;
+  --grafite-300: #bec4cb;
+  --grafite-400: #949ca6;
+  --grafite-500: #6b7480;
+  --grafite-600: #525a65;
+  --grafite-700: #3d444d;
+  --grafite-800: #292e35;
+  --grafite-900: #1b1f24;
+  --grafite-950: #121417;
+
+  --laranja-50: #fff4ec;
+  --laranja-100: #ffe5d2;
+  --laranja-200: #ffc9a5;
+  --laranja-300: #ffa56e;
+  --laranja-400: #f97f3c;
+  --laranja-500: #e8601a;
+  --laranja-600: #c8430b;
+  --laranja-700: #a3350a;
+  --laranja-800: #7f2b0c;
+  --laranja-900: #5f220d;
+
+  --verde-100: #dcf3e3;
+  --verde-600: #1e8a4c;
+  --verde-700: #166a3a;
+
+  --ambar-100: #fdf0c9;
+  --ambar-500: #e0a100;
+  --ambar-700: #7a5100;
+
+  --vermelho-100: #fce1de;
+  --vermelho-600: #c9302a;
+  --vermelho-700: #a32420;
+
+  --azul-100: #dcebfb;
+  --azul-600: #1f6fc4;
+  --azul-700: #17568f;
+
+  --branco: #ffffff;
+
+  /* ---------- FUNDO ---------- */
+  --fundo-pagina: var(--grafite-50);
+  --fundo-superficie: var(--branco);
+  --fundo-sutil: var(--grafite-100);
+  --fundo-desabilitado: var(--grafite-200);
+  --fundo-invertido: var(--grafite-900);
+  --fundo-invertido-ativo: var(--grafite-800);
+  --fundo-primario: var(--laranja-600);
+  --fundo-primario-hover: var(--laranja-700);
+  --fundo-primario-sutil: var(--laranja-50);
+  --fundo-perigo: var(--vermelho-600);
+  --fundo-perigo-hover: var(--vermelho-700);
+
+  /* ---------- TEXTO ---------- */
+  --texto-principal: var(--grafite-900);
+  --texto-secundario: var(--grafite-600);
+  --texto-apoio: var(--grafite-500);
+  --texto-desabilitado: var(--grafite-400);
+  --texto-invertido: var(--branco);
+  --texto-invertido-apoio: var(--grafite-300);
+  --texto-primario: var(--laranja-700);
+  --texto-perigo: var(--vermelho-700);
+
+  /* ---------- BORDA ---------- */
+  --borda-padrao: var(--grafite-200);
+  --borda-forte: var(--grafite-300);
+  --borda-foco: var(--laranja-600);
+  --borda-perigo: var(--vermelho-600);
+  --borda-invertida: var(--grafite-700);
+
+  /* ---------- STATUS (selos) ---------- */
+  --status-neutro-fundo: var(--grafite-100);
+  --status-neutro-texto: var(--grafite-700);
+  --status-info-fundo: var(--azul-100);
+  --status-info-texto: var(--azul-700);
+  --status-atencao-fundo: var(--ambar-100);
+  --status-atencao-texto: var(--ambar-700);
+  --status-sucesso-fundo: var(--verde-100);
+  --status-sucesso-texto: var(--verde-700);
+  --status-perigo-fundo: var(--vermelho-100);
+  --status-perigo-texto: var(--vermelho-700);
+  --status-entregue-fundo: var(--grafite-800);
+  --status-entregue-texto: var(--branco);
+
+  /* ---------- Tipografia ---------- */
+  --fonte-titulo: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --fonte-texto: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+  --fonte-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', monospace;
+
+  /* ---------- Espaços (múltiplos de 4 px) ---------- */
+  --espaco-1: 4px;
+  --espaco-2: 8px;
+  --espaco-3: 12px;
+  --espaco-4: 16px;
+  --espaco-5: 20px;
+  --espaco-6: 24px;
+  --espaco-8: 32px;
+  --espaco-10: 40px;
+  --espaco-12: 48px;
+  --espaco-16: 64px;
+
+  /* ---------- Raios ---------- */
+  --raio-p: 4px; /* selos pequenos, placa */
+  --raio-m: 8px; /* botões e campos */
+  --raio-g: 12px; /* cartões */
+  --raio-total: 999px; /* status e avatar */
+
+  /* ---------- Sombras ---------- */
+  --sombra-cartao: 0 1px 2px rgba(18, 20, 23, 0.06);
+  --sombra-flutuante: 0 8px 24px rgba(18, 20, 23, 0.16);
+
+  /* ---------- Medidas que mudam entre PC e celular ---------- */
+  --altura-controle: 40px; /* PC: botões e campos de 40 px */
+  --margem-pagina: var(--espaco-8); /* PC: margem de 32 px */
+  --largura-menu: 240px;
+  --altura-barra-superior: 64px;
+  --altura-abas: 64px;
+
+  /* ---------- Escala de texto (PC) ---------- */
+  --texto-corpo: 14px; /* Corpo/Médio é o texto padrão no PC */
+  --linha-corpo: 20px;
+}
+
+/* Celular (até 899 px): controles de 48 px, margem de 16 px e corpo de 16 px. */
+@media (max-width: 899px) {
+  :root {
+    --altura-controle: 48px;
+    --margem-pagina: var(--espaco-4);
+    --texto-corpo: 16px;
+    --linha-corpo: 24px;
+  }
+}

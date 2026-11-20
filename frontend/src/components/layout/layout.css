@@ -1,0 +1,287 @@
+/* ------- Logo ------- */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-3);
+  min-width: 0;
+}
+.logo__icone {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--raio-m);
+  background: var(--fundo-primario);
+  color: var(--texto-invertido);
+}
+.logo__nome {
+  font: 600 18px/24px var(--fonte-texto);
+  color: var(--texto-principal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.logo--claro .logo__nome {
+  color: var(--texto-invertido);
+}
+
+/* ------- Layout ------- */
+.layout {
+  display: grid;
+  grid-template-columns: var(--largura-menu) minmax(0, 1fr);
+  min-height: 100svh;
+}
+.layout__principal {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.layout__conteudo {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ------- Menu lateral ------- */
+.menu-lateral {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  background: var(--fundo-invertido);
+  color: var(--texto-invertido-apoio);
+  overflow-y: auto;
+}
+.menu-lateral__topo {
+  display: flex;
+  align-items: center;
+  height: var(--altura-barra-superior);
+  padding: 0 var(--espaco-4);
+}
+.menu-lateral__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-1);
+  padding: var(--espaco-4) var(--espaco-3);
+  flex: 1;
+}
+.menu-lateral__rodape {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-2);
+  padding: var(--espaco-3);
+  border-top: 1px solid var(--borda-invertida);
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+  height: 44px;
+  padding: 0 var(--espaco-3);
+  border-radius: var(--raio-m);
+  font: 500 14px/20px var(--fonte-texto);
+  color: var(--texto-invertido-apoio);
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+.menu-item:hover {
+  background: var(--fundo-invertido-ativo);
+  color: var(--texto-invertido);
+}
+.menu-item--ativo,
+.menu-item--ativo:hover {
+  background: var(--fundo-invertido-ativo);
+  color: var(--texto-invertido);
+  font-weight: 600;
+}
+.menu-item--ativo .menu-item__icone {
+  color: var(--laranja-400);
+}
+.menu-item__icone {
+  flex-shrink: 0;
+}
+.menu-item__rotulo {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.menu-item__breve {
+  padding: 1px 6px;
+  border-radius: var(--raio-p);
+  background: var(--fundo-invertido-ativo);
+  font: 500 10px/14px var(--fonte-texto);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--texto-invertido-apoio);
+}
+.menu-lateral__usuario {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+  padding: var(--espaco-2) var(--espaco-3);
+}
+.menu-lateral__usuario-textos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.menu-lateral__usuario-nome {
+  font: 600 14px/20px var(--fonte-texto);
+  color: var(--texto-invertido);
+}
+.menu-lateral__usuario-perfil {
+  font: 400 12px/16px var(--fonte-texto);
+  color: var(--texto-invertido-apoio);
+}
+
+/* ------- Barra superior ------- */
+.barra-superior {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-4);
+  height: var(--altura-barra-superior);
+  padding: 0 var(--margem-pagina);
+  background: var(--fundo-superficie);
+  border-bottom: 1px solid var(--borda-padrao);
+}
+.barra-superior__direita {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-2);
+}
+
+/* ------- Cabeçalho página ------- */
+.cabecalho-pagina {
+  padding: var(--espaco-8) var(--margem-pagina) 0;
+}
+.cabecalho-pagina__linha {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+  min-height: 40px;
+}
+.cabecalho-pagina__textos {
+  flex: 1;
+  min-width: 0;
+}
+.cabecalho-pagina__titulo {
+  margin: 0;
+  font: 600 36px/40px var(--fonte-titulo);
+  color: var(--texto-principal);
+}
+.cabecalho-pagina__subtitulo {
+  margin: var(--espaco-1) 0 0;
+  color: var(--texto-secundario);
+}
+.cabecalho-pagina__acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+}
+.cabecalho-pagina__voltar {
+  margin-left: calc(var(--espaco-2) * -1);
+}
+
+/* ------- Rodapé ações ------- */
+.rodape-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--espaco-3);
+}
+
+/* ------- Barra abas ------- */
+.barra-abas {
+  display: none;
+}
+
+/* 
+   Celular (até 899 px)
+*/
+@media (max-width: 899px) {
+  .layout {
+    display: block;
+    padding-bottom: calc(var(--altura-abas) + env(safe-area-inset-bottom));
+  }
+  .menu-lateral,
+  .barra-superior {
+    display: none;
+  }
+
+  .cabecalho-pagina {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: var(--espaco-2) var(--margem-pagina);
+    background: var(--fundo-superficie);
+    border-bottom: 1px solid var(--borda-padrao);
+  }
+  .cabecalho-pagina__linha {
+    min-height: 48px;
+  }
+  .cabecalho-pagina__titulo {
+    font: 600 20px/28px var(--fonte-texto);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cabecalho-pagina__subtitulo {
+    display: none;
+  }
+
+  /* Botões fixos acima das abas; a .pagina ganha espaço embaixo para eles. */
+  .rodape-acoes {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--altura-abas) + env(safe-area-inset-bottom));
+    z-index: 20;
+    padding: var(--espaco-3) var(--margem-pagina);
+    background: var(--fundo-superficie);
+    border-top: 1px solid var(--borda-padrao);
+  }
+  .rodape-acoes > * {
+    flex: 1;
+  }
+  .pagina {
+    padding-bottom: 96px;
+  }
+
+  .barra-abas {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    height: calc(var(--altura-abas) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--fundo-superficie);
+    border-top: 1px solid var(--borda-padrao);
+  }
+  .aba {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: var(--texto-apoio);
+  }
+  .aba__rotulo {
+    font: 500 11px/14px var(--fonte-texto);
+  }
+  .aba--ativa {
+    color: var(--texto-primario);
+  }
+  .aba--ativa .aba__rotulo {
+    font-weight: 600;
+  }
+}
