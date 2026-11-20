@@ -6,14 +6,17 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from repositories import cliente_repository, ordem_servico_repository, veiculo_repository
-from routers import autenticacao, busca, clientes, exportacao, ordens_servico
+from repositories import (
+    acao_os_repository, cliente_repository, item_os_repository, ordem_servico_repository, veiculo_repository,
+)
+from routers import acoes_os, autenticacao, busca, clientes, exportacao, itens_os, ordens_servico
 from services import auth_service
 
 
 @pytest.fixture(autouse=True)
 def limpar_dados():
-    for repositorio in (cliente_repository, ordem_servico_repository, veiculo_repository):
+    for repositorio in (acao_os_repository, cliente_repository, item_os_repository, ordem_servico_repository,
+                        veiculo_repository):
         repositorio.reiniciar()
     auth_service.usuarios.clear()
     auth_service.sessoes.clear()
@@ -25,7 +28,8 @@ def limpar_dados():
 @pytest.fixture
 def client():
     app = FastAPI()
-    for router in (ordens_servico.router, clientes.router, busca.router, autenticacao.router, exportacao.router):
+    for router in (ordens_servico.router, itens_os.router, acoes_os.router, clientes.router, busca.router,
+                   autenticacao.router, exportacao.router):
         app.include_router(router)
     return TestClient(app)
 
