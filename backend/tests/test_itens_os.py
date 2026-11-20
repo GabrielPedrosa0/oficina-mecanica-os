@@ -1,0 +1,103 @@
+import pytest
+
+ITEM = {"descricao": "Troca de pastilhas de freio", "tipo": "SERVICO", "valor": 150.0}
+
+
+@pytest.fixture
+def os_(client, os_corpo):
+    return client.post("/api/ordens-servico", json=os_corpo).json()
+
+
+def novo_item(client, os_id=1, **mudanca):
+    return client.post(f"/api/ordens-servico/{os_id}/itens", json={**ITEM, **mudanca})
+
+
+def test_adicionar_item(client, os_):
+    r = novo_item(client)
+    assert r.status_code == 201
+    assert r.json() == {"id": 1, "os_id": 1, **ITEM}
+
+
+def test_descricao_e_valor_sao_ajustados(client, os_):
+    r = novo_item(client, descricao="  Filtro de óleo  ", valor=35.456)
+    assert r.json()["descricao"] == "Filtro de óleo"
+    assert r.json()["valor"] == 35.46
+
+
+def test_listar_itens_so_da_os_pedida(client, os_, os_corpo):
+    client.post("/api/ordens-servico", json=os_corpo)  # OS 2
+    novo_item(client, 1)
+    novo_item(client, 1, descricao="Pastilhas dianteiras", tipo="PECA", valor=190)
+    novo_item(client, 2, descricao="Alinhamento")
+    r = client.get("/api/ordens-servico/1/itens")
+    assert r.status_code == 200
+    assert [i["descricao"] for i in r.json()] == ["Troca de pastilhas de freio", "Pastilhas dianteiras"]
+    assert client.get("/api/ordens-servico/2/itens").json()[0]["descricao"] == "Alinhamento"
+
+
+def test_os_sem_itens_devolve_lista_vazia(client, os_):
+    assert client.get("/api/ordens-servico/1/itens").json() == []
+
+
+def test_os_inexistente_404_em_todas_as_rotas_de_itens(client):
+    esperado = "Ordem de serviço não encontrada."
+    for r in (client.get("/api/ordens-servico/99/itens"),
+              client.post("/api/ordens-servico/99/itens", json=ITEM),
+              client.put("/api/ordens-servico/99/itens/1", json=ITEM),
+              client.delete("/api/ordens-servico/99/itens/1")):
+        assert r.status_code == 404
+        assert r.json()["detail"] == esperado
+
+
+@pytest.mark.parametrize("mudanca, trecho", [
+    ({"valor": 0}, "maior que zero"),
+    ({"valor": -10}, "maior que zero"),
+    ({"valor": 0.001}, "maior que zero"),  # arredonda para 0,00
+    ({"descricao": "   "}, "descrição"),
+])
+def test_item_invalido_422(client, os_, mudanca, trecho):
+    r = novo_item(client, **mudanca)
+    assert r.status_code == 422
+    assert trecho in r.json()["detail"]
+
+
+def test_campos_obrigatorios_e_tipo_invalido_422(client, os_):
+    url = "/api/ordens-servico/1/itens"
+    assert client.post(url, json={"tipo": "PECA", "valor": 10}).status_code == 422
+    assert client.post(url, json={"descricao": "Óleo", "valor": 10}).status_code == 422
+    assert client.post(url, json={"descricao": "Óleo", "tipo": "PECA"}).status_code == 422
+    assert novo_item(client, tipo="OUTRO").status_code == 422
+    assert novo_item(client, valor="caro").status_code == 422
+
+
+def test_atualizar_item(client, os_):
+    novo_item(client)
+    r = client.put("/api/ordens-servico/1/itens/1", json={**ITEM, "descricao": "Troca de óleo", "valor": 200})
+    assert r.status_code == 200
+    assert r.json() == {"id": 1, "os_id": 1, "descricao": "Troca de óleo", "tipo": "SERVICO", "valor": 200.0}
+    assert client.get("/api/ordens-servico/1/itens").json()[0]["descricao"] == "Troca de óleo"
+
+
+def test_atualizar_item_invalido_422_e_nao_altera(client, os_):
+    novo_item(client)
+    assert client.put("/api/ordens-servico/1/itens/1", json={**ITEM, "valor": 0}).status_code == 422
+    assert client.get("/api/ordens-servico/1/itens").json()[0]["valor"] == 150.0
+
+
+def test_item_inexistente_ou_de_outra_os_404(client, os_, os_corpo):
+    client.post("/api/ordens-servico", json=os_corpo)  # OS 2
+    novo_item(client, 1)
+    for r in (client.put("/api/ordens-servico/1/itens/99", json=ITEM),
+              client.delete("/api/ordens-servico/1/itens/99"),
+              client.put("/api/ordens-servico/2/itens/1", json=ITEM),   # o item 1 é da OS 1
+              client.delete("/api/ordens-servico/2/itens/1")):
+        assert r.status_code == 404
+        assert r.json()["detail"] == "Item não encontrado."
+    assert len(client.get("/api/ordens-servico/1/itens").json()) == 1
+
+
+def test_excluir_item(client, os_):
+    novo_item(client)
+    assert client.delete("/api/ordens-servico/1/itens/1").status_code == 204
+    assert client.get("/api/ordens-servico/1/itens").json() == []
+    assert client.delete("/api/ordens-servico/1/itens/1").status_code == 404
