@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 
 from routers import (
-    acoes_os, autenticacao, busca, clientes, dashboard, exportacao, itens, itens_os,
+    acoes_os, apontamentos, autenticacao, busca, clientes, dashboard, exportacao, itens, itens_os,
     mecanicos, ordens_servico, veiculos,
 )
 
@@ -12,6 +12,7 @@ app = FastAPI(docs_url="/api/docs", openapi_url="/api/openapi.json")
 app.include_router(ordens_servico.router)
 app.include_router(itens_os.router)
 app.include_router(acoes_os.router)
+app.include_router(apontamentos.router)
 app.include_router(exportacao.router)
 app.include_router(clientes.router)
 app.include_router(busca.router)

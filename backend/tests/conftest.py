@@ -1,4 +1,5 @@
-# Fixtures dos testes de ordens de serviço, clientes, mecânicos, busca, exportação e autenticação.
+# Fixtures dos testes de ordens de serviço, apontamentos, clientes, mecânicos, busca, exportação
+# e autenticação.
 # O app de teste monta só os routers desses módulos, sem depender do main.py.
 # Os routers entram na ordem "ruim" de propósito (ordens antes da exportação): a rota
 # /api/ordens-servico/exportar precisa funcionar em qualquer ordem.
@@ -7,17 +8,19 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from repositories import (
-    acao_os_repository, cliente_repository, item_os_repository, item_repository, mecanico_repository,
-    ordem_servico_repository, veiculo_repository,
+    acao_os_repository, apontamento_repository, cliente_repository, item_os_repository, item_repository,
+    mecanico_repository, ordem_servico_repository, veiculo_repository,
 )
-from routers import acoes_os, autenticacao, busca, clientes, exportacao, itens, itens_os, mecanicos, ordens_servico
+from routers import (
+    acoes_os, apontamentos, autenticacao, busca, clientes, exportacao, itens, itens_os, mecanicos, ordens_servico,
+)
 from services import auth_service
 
 
 @pytest.fixture(autouse=True)
 def limpar_dados():
-    for repositorio in (acao_os_repository, cliente_repository, item_os_repository, item_repository,
-                        mecanico_repository, ordem_servico_repository, veiculo_repository):
+    for repositorio in (acao_os_repository, apontamento_repository, cliente_repository, item_os_repository,
+                        item_repository, mecanico_repository, ordem_servico_repository, veiculo_repository):
         repositorio.reiniciar()
     auth_service.usuarios.clear()
     auth_service.sessoes.clear()
@@ -29,8 +32,8 @@ def limpar_dados():
 @pytest.fixture
 def client():
     app = FastAPI()
-    for router in (ordens_servico.router, itens_os.router, acoes_os.router, clientes.router, busca.router,
-                   autenticacao.router, exportacao.router, mecanicos.router, itens.router):
+    for router in (ordens_servico.router, itens_os.router, acoes_os.router, apontamentos.router, clientes.router,
+                   busca.router, autenticacao.router, exportacao.router, mecanicos.router, itens.router):
         app.include_router(router)
     return TestClient(app)
 
