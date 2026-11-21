@@ -1,4 +1,6 @@
--- Modelo lógico da oficina (PostgreSQL) - versão 6
+-- Modelo lógico da oficina (PostgreSQL) - versão 8
+-- Mudanças da v8: em apontamento, a coluna data_hora vira data (o mesmo nome do modelo
+-- conceitual e da API) e o tipo passa a ter os 8 momentos da OS que as telas mostram.
 -- Mudanças da v6: peça e serviço viram um catálogo único, a tabela item (com tipo
 -- 'PECA' ou 'SERVICO'), e uma associativa só com a OS, os_itens. Saem as tabelas
 -- peca, servico, os_pecas e os_servicos. A visão vw_os_total soma só os_itens.
@@ -147,15 +149,17 @@ INSERT INTO item (id_item, tipo, descricao) VALUES
 SELECT setval('item_id_item_seq', 2);
 
 -- ---------------------------------------------------------------
--- Apontamento (registro de diagnóstico/execução da OS)
+-- Apontamento (a linha do tempo da OS: o que aconteceu com o carro, com data e hora)
 -- ---------------------------------------------------------------
 CREATE TABLE apontamento (
     id_apontamento  serial       PRIMARY KEY,
     id_os           integer      NOT NULL,
-    data_hora       timestamp    NOT NULL DEFAULT LOCALTIMESTAMP,
+    data            timestamp    NOT NULL DEFAULT LOCALTIMESTAMP,
     tipo            varchar(20)  NOT NULL,
     descricao       text         NOT NULL,
-    CONSTRAINT ck_apontamento_tipo CHECK (tipo IN ('DIAGNOSTICO', 'EXECUCAO', 'OBSERVACAO')),
+    -- ABERTURA, ORCAMENTO e ENTREGA o sistema registra sozinho; os outros a pessoa escolhe.
+    CONSTRAINT ck_apontamento_tipo CHECK (tipo IN ('ABERTURA', 'DIAGNOSTICO', 'ORCAMENTO', 'APROVACAO',
+                                                   'EXECUCAO', 'PECA', 'ENTREGA', 'OBSERVACAO')),
     CONSTRAINT fk_apontamento_os FOREIGN KEY (id_os)
         REFERENCES os (id_os) ON UPDATE CASCADE ON DELETE CASCADE
 );
