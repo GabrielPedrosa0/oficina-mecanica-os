@@ -81,7 +81,7 @@ def obter_resumo(ver_faturamento: bool):
         # Entra no mês pela data de conclusão. OS entregue sem data_conclusao não é contada.
         entregues_no_mes = [o for o in ordem_servico_repository.listar_por_status("ENTREGUE")
                             if esta_entre(o["data_conclusao"], inicio_mes, fim_mes)]
-        faturamento = round(sum(o["valor_total"] for o in entregues_no_mes), 2)
+        faturamento = round(sum(o.get("valor_total", 0) for o in entregues_no_mes), 2)
 
     return {
         "em_servico": len(em_servico),

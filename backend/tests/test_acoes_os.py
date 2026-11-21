@@ -2,6 +2,7 @@ from datetime import datetime
 
 import pytest
 
+from repositories import ordem_servico_repository
 from services import dashboard_service
 
 
@@ -29,7 +30,7 @@ def test_status_devolve_a_os_completa(client, os_corpo):
     os_ = mudar(client, "PRONTA").json()
     assert os_["placa"] == "QRS4F21"
     assert os_["cliente_nome"] == "Marina Souza"
-    assert os_["mecanico"] == "Rafael"  # os outros campos ficam como estavam
+    assert os_["mecanico_id"] == 1  # os outros campos ficam como estavam
 
 
 @pytest.mark.parametrize("de, para", [
@@ -88,7 +89,9 @@ def test_data_de_conclusao_nunca_fica_antes_da_abertura(client, os_corpo, monkey
 
 def test_os_entregue_entra_no_faturamento_do_painel(client, os_corpo, monkeypatch):
     monkeypatch.setattr(dashboard_service, "agora", lambda: datetime(2026, 11, 20, 10, 30, 0))
-    nova_os(client, os_corpo, status="PRONTA", valor_total=340)
+    nova_os(client, os_corpo, status="PRONTA")
+    # O valor total não vai no corpo da OS; aqui gravamos direto, como no teste do painel.
+    ordem_servico_repository.ordens[1]["valor_total"] = 340
     assert dashboard_service.obter_resumo(True)["faturamento_mes"] == 0
     mudar(client, "ENTREGUE")
     assert dashboard_service.obter_resumo(True)["faturamento_mes"] == 340.0
@@ -114,15 +117,17 @@ def test_marcar_pronta_fora_do_momento_409(client, os_corpo, de):
 
 # --- Enviar orçamento ---
 
-def adicionar(client, valor, tipo="SERVICO"):
-    client.post("/api/ordens-servico/1/itens", json={"descricao": "Item", "tipo": tipo, "valor": valor})
+# item_id 1 = Peça e 2 = Serviço, os itens que o catálogo já traz.
+def adicionar(client, valor, item_id=2, quantidade=1):
+    client.post("/api/ordens-servico/1/itens",
+                json={"item_id": item_id, "descricao": "Item", "quantidade": quantidade, "valor_unitario": valor})
 
 
 def test_enviar_orcamento_registra_o_envio_e_soma_os_itens(client, os_corpo, monkeypatch):
     monkeypatch.setattr(dashboard_service, "agora", lambda: datetime(2026, 11, 12, 9, 0, 0))
     nova_os(client, os_corpo, status="ORCAMENTO")
     adicionar(client, 150)
-    adicionar(client, 190.5, "PECA")
+    adicionar(client, 95.25, item_id=1, quantidade=2)  # 2 × 95,25 = 190,50
     r = client.post("/api/ordens-servico/1/enviar-orcamento")
     assert r.status_code == 200
     corpo = r.json()

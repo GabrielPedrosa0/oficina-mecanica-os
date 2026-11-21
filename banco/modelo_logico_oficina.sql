@@ -1,14 +1,16 @@
--- Modelo lógico da oficina (PostgreSQL) - versão 5
--- Mudanças da v5: a tabela endereco deixa de existir; o endereço vira colunas de cliente
--- (cep, logradouro, numero, complemento, bairro, cidade, uf). A busca por CEP é feita
--- numa API externa (ViaCEP), não no banco.
--- Mantido da v4: quantidade é integer em os_pecas e os_servicos; nenhuma data usa fuso horário.
--- Gerado a partir do modelo conceitual (modelo_relacional_oficina.drawio, página "Oficina · conceitual, sem especialidade")
--- e da versão em andamento model.pgerd (cliente, veiculo, os, peca, os_pecas).
+-- Modelo lógico da oficina (PostgreSQL) - versão 6
+-- Mudanças da v6: peça e serviço viram um catálogo único, a tabela item (com tipo
+-- 'PECA' ou 'SERVICO'), e uma associativa só com a OS, os_itens. Saem as tabelas
+-- peca, servico, os_pecas e os_servicos. A visão vw_os_total soma só os_itens.
+-- os_itens tem chave própria (id_item_os) e a sua descrição. Não há chave composta
+-- nem UNIQUE no par (id_os, id_item): a mesma peça pode entrar duas vezes na mesma OS.
+-- O catálogo já começa com uma peça e um serviço cadastrados.
+-- Mantido da v5: o endereço é feito de colunas de cliente (busca por CEP no ViaCEP).
+-- Mantido da v4: quantidade é integer; nenhuma data usa fuso horário.
+-- Gerado a partir do modelo conceitual (docs/modelo/modelo_conceitual_oficina.drawio).
 --
--- Relações N:N do conceitual que aqui viram tabela:
---   OS N:N Serviço (Inclui)     -> os_servicos
---   OS N:N Peça (Utiliza)       -> os_pecas
+-- Relação N:N do conceitual que aqui vira tabela:
+--   OS N:N Item (Utiliza)       -> os_itens
 -- Valor_total é calculado: não é coluna, sai da visão vw_os_total.
 
 BEGIN;
@@ -104,59 +106,45 @@ CREATE TABLE os (
 );
 
 -- ---------------------------------------------------------------
--- Serviço (catálogo) e a relação N:N com a OS (Inclui)
+-- Item (catálogo único de peças e serviços) e a relação N:N com a OS (Utiliza)
 -- ---------------------------------------------------------------
-CREATE TABLE servico (
-    id_servico          serial         PRIMARY KEY,
+CREATE TABLE item (
+    id_item             serial         PRIMARY KEY,
+    tipo                varchar(7)     NOT NULL,   -- 'PECA' ou 'SERVICO'
     descricao           varchar(120)   NOT NULL,
-    preco_base          numeric(10,2)  NOT NULL DEFAULT 0,
-    tempo_estimado_min  integer,
-    CONSTRAINT uq_servico_descricao UNIQUE (descricao),
-    CONSTRAINT ck_servico_preco CHECK (preco_base >= 0),
-    CONSTRAINT ck_servico_tempo CHECK (tempo_estimado_min > 0)
+    codigo              varchar(20),               -- só peça; "OLE-5W30-4L" tem 11
+    preco               numeric(10,2)  NOT NULL DEFAULT 0,
+    qtd_estoque         integer,                   -- só peça
+    tempo_estimado_min  integer,                   -- só serviço
+    CONSTRAINT ck_item_tipo      CHECK (tipo IN ('PECA', 'SERVICO')),
+    CONSTRAINT uq_item_descricao UNIQUE (tipo, descricao),
+    CONSTRAINT uq_item_codigo    UNIQUE (codigo),
+    CONSTRAINT ck_item_preco     CHECK (preco >= 0),
+    CONSTRAINT ck_item_estoque   CHECK (qtd_estoque >= 0),
+    CONSTRAINT ck_item_tempo     CHECK (tempo_estimado_min > 0)
 );
 
-CREATE TABLE os_servicos (
-    id_os          integer        NOT NULL,
-    id_servico     integer        NOT NULL,
-    quantidade     integer        NOT NULL DEFAULT 1,
-    valor_cobrado  numeric(10,2)  NOT NULL,
-    CONSTRAINT pk_os_servicos PRIMARY KEY (id_os, id_servico),
-    CONSTRAINT ck_os_servicos_qtd   CHECK (quantidade > 0),
-    CONSTRAINT ck_os_servicos_valor CHECK (valor_cobrado >= 0),
-    CONSTRAINT fk_os_servicos_os FOREIGN KEY (id_os)
-        REFERENCES os (id_os) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT fk_os_servicos_servico FOREIGN KEY (id_servico)
-        REFERENCES servico (id_servico) ON UPDATE CASCADE ON DELETE RESTRICT
-);
-
--- ---------------------------------------------------------------
--- Peça (estoque) e a relação N:N com a OS (Utiliza)
--- ---------------------------------------------------------------
-CREATE TABLE peca (
-    id_peca      serial         PRIMARY KEY,
-    codigo       varchar(20)    NOT NULL,   -- era varchar(7); "OLE-5W30-4L" tem 11
-    descricao    varchar(80)    NOT NULL,
-    preco_venda  numeric(10,2)  NOT NULL DEFAULT 0,
-    qtd_estoque  integer        NOT NULL DEFAULT 0,
-    CONSTRAINT uq_peca_codigo UNIQUE (codigo),
-    CONSTRAINT ck_peca_preco   CHECK (preco_venda >= 0),
-    CONSTRAINT ck_peca_estoque CHECK (qtd_estoque >= 0)
-);
-
-CREATE TABLE os_pecas (
+CREATE TABLE os_itens (
+    id_item_os      serial         PRIMARY KEY,
     id_os           integer        NOT NULL,
-    id_peca         integer        NOT NULL,
+    id_item         integer        NOT NULL,
+    descricao       varchar(120)   NOT NULL,   -- o que foi feito ou usado nesta OS
     quantidade      integer        NOT NULL DEFAULT 1,
-    valor_unitario  numeric(10,2)  NOT NULL,
-    CONSTRAINT pk_os_pecas PRIMARY KEY (id_os, id_peca),
-    CONSTRAINT ck_os_pecas_qtd   CHECK (quantidade > 0),
-    CONSTRAINT ck_os_pecas_valor CHECK (valor_unitario >= 0),
-    CONSTRAINT fk_os_pecas_os FOREIGN KEY (id_os)
+    valor_unitario  numeric(10,2)  NOT NULL,   -- preço cobrado nesta OS
+    CONSTRAINT ck_os_itens_qtd   CHECK (quantidade > 0),
+    CONSTRAINT ck_os_itens_valor CHECK (valor_unitario >= 0),
+    CONSTRAINT fk_os_itens_os FOREIGN KEY (id_os)
         REFERENCES os (id_os) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT fk_os_pecas_peca FOREIGN KEY (id_peca)
-        REFERENCES peca (id_peca) ON UPDATE CASCADE ON DELETE RESTRICT
+    CONSTRAINT fk_os_itens_item FOREIGN KEY (id_item)
+        REFERENCES item (id_item) ON UPDATE CASCADE ON DELETE RESTRICT
 );
+
+-- O catálogo começa com uma peça e um serviço cadastrados.
+INSERT INTO item (id_item, tipo, descricao) VALUES
+    (1, 'PECA',    'Peça'),
+    (2, 'SERVICO', 'Serviço');
+-- Como os ids 1 e 2 foram dados à mão, o serial passa a contar a partir do 3.
+SELECT setval('item_id_item_seq', 2);
 
 -- ---------------------------------------------------------------
 -- Apontamento (registro de diagnóstico/execução da OS)
@@ -193,8 +181,8 @@ CREATE INDEX ix_veiculo_cliente       ON veiculo (id_cliente);
 CREATE INDEX ix_os_veiculo            ON os (id_veiculo);
 CREATE INDEX ix_os_mecanico           ON os (id_mecanico);
 CREATE INDEX ix_os_status             ON os (status);
-CREATE INDEX ix_os_servicos_servico   ON os_servicos (id_servico);
-CREATE INDEX ix_os_pecas_peca         ON os_pecas (id_peca);
+CREATE INDEX ix_os_itens_os           ON os_itens (id_os);
+CREATE INDEX ix_os_itens_item         ON os_itens (id_item);
 CREATE INDEX ix_apontamento_os        ON apontamento (id_os);
 
 -- ---------------------------------------------------------------
@@ -202,8 +190,7 @@ CREATE INDEX ix_apontamento_os        ON apontamento (id_os);
 -- ---------------------------------------------------------------
 CREATE VIEW vw_os_total AS
 SELECT o.id_os,
-       COALESCE((SELECT sum(s.quantidade * s.valor_cobrado)  FROM os_servicos s WHERE s.id_os = o.id_os), 0)
-     + COALESCE((SELECT sum(p.quantidade * p.valor_unitario) FROM os_pecas    p WHERE p.id_os = o.id_os), 0)
+       COALESCE((SELECT sum(i.quantidade * i.valor_unitario) FROM os_itens i WHERE i.id_os = o.id_os), 0)
        AS valor_total
 FROM os o;
 

@@ -1,6 +1,7 @@
 import pytest
 
-ITEM = {"descricao": "Troca de pastilhas de freio", "tipo": "SERVICO", "valor": 150.0}
+# O item_id aponta para o catálogo: 1 = Peça e 2 = Serviço já vêm cadastrados.
+ITEM = {"item_id": 2, "descricao": "Troca de pastilhas de freio", "quantidade": 1, "valor_unitario": 150.0}
 
 
 @pytest.fixture
@@ -15,23 +16,25 @@ def novo_item(client, os_id=1, **mudanca):
 def test_adicionar_item(client, os_):
     r = novo_item(client)
     assert r.status_code == 201
-    assert r.json() == {"id": 1, "os_id": 1, **ITEM}
+    # Na resposta, o tipo, o código e o tempo vêm do catálogo (o item 2 é o Serviço).
+    assert r.json() == {"id": 1, "os_id": 1, **ITEM, "tipo": "SERVICO", "codigo": None, "tempo_estimado_min": None}
 
 
 def test_descricao_e_valor_sao_ajustados(client, os_):
-    r = novo_item(client, descricao="  Filtro de óleo  ", valor=35.456)
+    r = novo_item(client, descricao="  Filtro de óleo  ", valor_unitario=35.456)
     assert r.json()["descricao"] == "Filtro de óleo"
-    assert r.json()["valor"] == 35.46
+    assert r.json()["valor_unitario"] == 35.46
 
 
 def test_listar_itens_so_da_os_pedida(client, os_, os_corpo):
     client.post("/api/ordens-servico", json=os_corpo)  # OS 2
     novo_item(client, 1)
-    novo_item(client, 1, descricao="Pastilhas dianteiras", tipo="PECA", valor=190)
+    novo_item(client, 1, item_id=1, descricao="Pastilhas dianteiras", valor_unitario=190)
     novo_item(client, 2, descricao="Alinhamento")
     r = client.get("/api/ordens-servico/1/itens")
     assert r.status_code == 200
     assert [i["descricao"] for i in r.json()] == ["Troca de pastilhas de freio", "Pastilhas dianteiras"]
+    assert [i["tipo"] for i in r.json()] == ["SERVICO", "PECA"]
     assert client.get("/api/ordens-servico/2/itens").json()[0]["descricao"] == "Alinhamento"
 
 
@@ -50,10 +53,10 @@ def test_os_inexistente_404_em_todas_as_rotas_de_itens(client):
 
 
 @pytest.mark.parametrize("mudanca, trecho", [
-    ({"valor": 0}, "maior que zero"),
-    ({"valor": -10}, "maior que zero"),
-    ({"valor": 0.001}, "maior que zero"),  # arredonda para 0,00
+    ({"valor_unitario": 0}, "maior que zero"),
+    ({"valor_unitario": 0.001}, "maior que zero"),  # arredonda para 0,00
     ({"descricao": "   "}, "descrição"),
+    ({"item_id": 99}, "catálogo"),
 ])
 def test_item_invalido_422(client, os_, mudanca, trecho):
     r = novo_item(client, **mudanca)
@@ -61,27 +64,37 @@ def test_item_invalido_422(client, os_, mudanca, trecho):
     assert trecho in r.json()["detail"]
 
 
-def test_campos_obrigatorios_e_tipo_invalido_422(client, os_):
+def test_campos_obrigatorios_e_invalidos_422(client, os_):
     url = "/api/ordens-servico/1/itens"
-    assert client.post(url, json={"tipo": "PECA", "valor": 10}).status_code == 422
-    assert client.post(url, json={"descricao": "Óleo", "valor": 10}).status_code == 422
-    assert client.post(url, json={"descricao": "Óleo", "tipo": "PECA"}).status_code == 422
-    assert novo_item(client, tipo="OUTRO").status_code == 422
-    assert novo_item(client, valor="caro").status_code == 422
+    assert client.post(url, json={"item_id": 1, "valor_unitario": 10}).status_code == 422
+    assert client.post(url, json={"descricao": "Óleo", "valor_unitario": 10}).status_code == 422
+    assert client.post(url, json={"item_id": 1, "descricao": "Óleo"}).status_code == 422
+    assert novo_item(client, quantidade=0).status_code == 422
+    assert novo_item(client, valor_unitario=-10).status_code == 422
+    assert novo_item(client, valor_unitario="caro").status_code == 422
+
+
+# A mesma peça pode entrar mais de uma vez na mesma OS.
+def test_mesma_peca_duas_vezes(client, os_):
+    novo_item(client, item_id=1, descricao="Pastilhas", valor_unitario=95)
+    r = novo_item(client, item_id=1, descricao="Pastilhas", valor_unitario=95)
+    assert r.status_code == 201
+    assert len(client.get("/api/ordens-servico/1/itens").json()) == 2
 
 
 def test_atualizar_item(client, os_):
     novo_item(client)
-    r = client.put("/api/ordens-servico/1/itens/1", json={**ITEM, "descricao": "Troca de óleo", "valor": 200})
+    r = client.put("/api/ordens-servico/1/itens/1", json={**ITEM, "descricao": "Troca de óleo", "valor_unitario": 200})
     assert r.status_code == 200
-    assert r.json() == {"id": 1, "os_id": 1, "descricao": "Troca de óleo", "tipo": "SERVICO", "valor": 200.0}
+    assert r.json()["descricao"] == "Troca de óleo"
+    assert r.json()["valor_unitario"] == 200.0
     assert client.get("/api/ordens-servico/1/itens").json()[0]["descricao"] == "Troca de óleo"
 
 
 def test_atualizar_item_invalido_422_e_nao_altera(client, os_):
     novo_item(client)
-    assert client.put("/api/ordens-servico/1/itens/1", json={**ITEM, "valor": 0}).status_code == 422
-    assert client.get("/api/ordens-servico/1/itens").json()[0]["valor"] == 150.0
+    assert client.put("/api/ordens-servico/1/itens/1", json={**ITEM, "valor_unitario": 0}).status_code == 422
+    assert client.get("/api/ordens-servico/1/itens").json()[0]["valor_unitario"] == 150.0
 
 
 def test_item_inexistente_ou_de_outra_os_404(client, os_, os_corpo):
