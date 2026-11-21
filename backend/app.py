@@ -2,7 +2,8 @@
 from fastapi import FastAPI
 
 from routers import (
-    acoes_os, autenticacao, busca, clientes, dashboard, exportacao, itens_os, ordens_servico, veiculos,
+    acoes_os, autenticacao, busca, clientes, dashboard, exportacao, itens, itens_os,
+    mecanicos, ordens_servico, veiculos,
 )
 
 # A documentação fica em /api/docs, assim toda a aplicação mora em /api.
@@ -17,3 +18,5 @@ app.include_router(busca.router)
 app.include_router(autenticacao.router)
 app.include_router(veiculos.router)
 app.include_router(dashboard.router)
+app.include_router(mecanicos.router)
+app.include_router(itens.router)
