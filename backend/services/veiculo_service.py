@@ -18,9 +18,9 @@ def validar(entrada: Veiculo):
         raise HTTPException(status_code=422, detail="Placa inválida. Use ABC1234 ou ABC1D23.")
     if entrada.marca.strip() == "" or entrada.modelo.strip() == "":
         raise HTTPException(status_code=422, detail="Marca e modelo são obrigatórios.")
-    if entrada.ano < 1900 or entrada.ano > 2100:
+    if entrada.ano is not None and (entrada.ano < 1900 or entrada.ano > 2100):
         raise HTTPException(status_code=422, detail="Ano inválido.")
-    if entrada.quilometragem < 0:
+    if entrada.quilometragem is not None and entrada.quilometragem < 0:
         raise HTTPException(status_code=422, detail="A quilometragem não pode ser negativa.")
     if entrada.cliente_id is not None and cliente_repository.buscar(entrada.cliente_id) is None:
         raise HTTPException(status_code=422, detail="Cliente não encontrado.")

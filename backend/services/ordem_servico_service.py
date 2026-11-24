@@ -1,11 +1,10 @@
 # Regras de negócio das ordens de serviço.
-import math
 from datetime import datetime
 
 from fastapi import HTTPException
 
 from core.texto import limpar, normalizar, placa_confere
-from repositories import cliente_repository, ordem_servico_repository, veiculo_repository
+from repositories import cliente_repository, mecanico_repository, ordem_servico_repository, veiculo_repository
 from schemas.ordem_servico_schema import OrdemServico
 
 
@@ -16,6 +15,10 @@ def validar_ordem(entrada: OrdemServico, atual=None):
     if veiculo is None:
         raise HTTPException(status_code=422, detail="Veículo não encontrado.")
 
+    # O mecânico é opcional ("A definir"), mas, se vier, tem que existir.
+    if entrada.mecanico_id is not None and mecanico_repository.buscar(entrada.mecanico_id) is None:
+        raise HTTPException(status_code=422, detail="Mecânico não encontrado.")
+
     problema = entrada.problema_relatado.strip()
     if problema == "":
         raise HTTPException(status_code=422, detail="O problema relatado é obrigatório.")
@@ -24,9 +27,6 @@ def validar_ordem(entrada: OrdemServico, atual=None):
     km = entrada.quilometragem if entrada.quilometragem is not None else veiculo["quilometragem"]
     if km < 0:
         raise HTTPException(status_code=422, detail="A quilometragem não pode ser negativa.")
-
-    if not math.isfinite(entrada.valor_total) or entrada.valor_total < 0:
-        raise HTTPException(status_code=422, detail="O valor total não pode ser negativo.")
 
     for data in (entrada.data_abertura, entrada.data_previsao, entrada.data_conclusao):
         if data is not None and data.tzinfo is not None:
@@ -51,14 +51,13 @@ def validar_ordem(entrada: OrdemServico, atual=None):
         "veiculo_id": entrada.veiculo_id,
         "quilometragem": km,
         "problema_relatado": problema,
-        "servico": limpar(entrada.servico),
-        "mecanico": limpar(entrada.mecanico),
+        "mecanico_id": entrada.mecanico_id,
+        "eh_garantia": entrada.eh_garantia,
         "data_abertura": abertura,
         "data_previsao": entrada.data_previsao,
         "data_conclusao": entrada.data_conclusao,
         "status": entrada.status,
         "observacoes": limpar(entrada.observacoes),
-        "valor_total": round(entrada.valor_total, 2),
     }
 
 
@@ -70,12 +69,26 @@ def buscar_ordem(id: int):
     return ordem
 
 
+# Exige a OS aberta (nem entregue nem cancelada): fechada, é só para leitura (409).
+def exigir_aberta(ordem):
+    if ordem["status"] == "ENTREGUE":
+        raise HTTPException(status_code=409, detail="A OS já foi entregue: ela é só para leitura.")
+    if ordem["status"] == "CANCELADA":
+        raise HTTPException(status_code=409, detail="A OS foi cancelada: ela é só para leitura.")
+
+
 # A OS com os dados que as telas mostram: placa, veículo e cliente.
 # Eles vêm do veículo e do cliente na hora da leitura, não ficam gravados na OS.
+# mecanico, servico e valor_total também são da leitura. Enquanto os itens da OS
+# (peças e serviços) não existem, ficam vazios e o valor total é 0,
+# a não ser que a OS gravada já os tenha.
 def ordem_completa(ordem):
     veiculo = veiculo_repository.buscar(ordem["veiculo_id"]) or {}
     cliente = cliente_repository.buscar(veiculo.get("cliente_id")) or {}
     return {
+        "mecanico": None,
+        "servico": None,
+        "valor_total": 0.0,
         **ordem,
         "placa": veiculo.get("placa"),
         "veiculo": f"{veiculo.get('marca', '')} {veiculo.get('modelo', '')}".strip(),
@@ -112,6 +125,7 @@ def cadastrar_ordem(entrada: OrdemServico):
 
 def atualizar_ordem(id: int, entrada: OrdemServico):
     atual = buscar_ordem(id)
+    exigir_aberta(atual)
     return ordem_completa(ordem_servico_repository.atualizar(id, validar_ordem(entrada, atual)))
 
 

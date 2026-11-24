@@ -4,14 +4,16 @@ from fastapi import HTTPException
 from repositories import acao_os_repository, item_os_repository, ordem_servico_repository
 from services import dashboard_service, item_os_service, ordem_servico_service
 
-# Para quais status cada status pode ir. ENTREGUE é o fim: dele não se sai.
+# Para quais status cada status pode ir. ENTREGUE e CANCELADA são o fim: deles não se sai.
 # PRONTA pode voltar para EM_SERVICO (o cliente achou um defeito, por exemplo).
+# Só se cancela no ORCAMENTO: o cliente não gostou do orçamento e desistiu.
 TRANSICOES = {
-    "ORCAMENTO": ("EM_SERVICO",),
+    "ORCAMENTO": ("EM_SERVICO", "CANCELADA"),
     "EM_SERVICO": ("AGUARDANDO_PECA", "PRONTA"),
     "AGUARDANDO_PECA": ("EM_SERVICO",),
     "PRONTA": ("ENTREGUE", "EM_SERVICO"),
     "ENTREGUE": (),
+    "CANCELADA": (),
 }
 
 
@@ -37,11 +39,13 @@ def marcar_pronta(id: int):
 
 
 # Registra o envio do orçamento. A OS precisa ter ao menos um item (é deles que vem o total)
-# e não pode já estar concluída. Devolve a OS com a data do envio e o total do orçamento.
+# e não pode já estar concluída nem cancelada. Devolve a OS com a data do envio e o total do orçamento.
 def enviar_orcamento(id: int):
     ordem = ordem_servico_service.buscar_ordem(id)
     if ordem["status"] in ("PRONTA", "ENTREGUE"):
         raise HTTPException(status_code=409, detail="A OS já está concluída: não há orçamento para enviar.")
+    if ordem["status"] == "CANCELADA":
+        raise HTTPException(status_code=409, detail="A OS foi cancelada: não há orçamento para enviar.")
     if not item_os_repository.listar_da_os(id):
         raise HTTPException(status_code=409, detail="Adicione ao menos um item à OS antes de enviar o orçamento.")
 

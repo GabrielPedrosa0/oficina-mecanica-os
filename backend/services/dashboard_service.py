@@ -14,9 +14,9 @@ LIMITE_ENTREGAS = 20         # "Listas carregam 20 itens por vez"
 LIMITE_RECENTES = 10         # "Tabela com as 10 OS abertas mais recentes"
 TAMANHO_RESUMO_SERVICO = 60
 
-# OS aberta = ainda não entregue. Vem da lista de status do schema, então um status
+# OS aberta = nem entregue nem cancelada. Vem da lista de status do schema, então um status
 # novo entra aqui sozinho.
-STATUS_ABERTOS = tuple(s for s in get_args(Status) if s != "ENTREGUE")
+STATUS_ABERTOS = tuple(s for s in get_args(Status) if s not in ("ENTREGUE", "CANCELADA"))
 
 
 # Agora, no horário da oficina e sem fuso (igual às datas gravadas nas OS).
@@ -81,7 +81,7 @@ def obter_resumo(ver_faturamento: bool):
         # Entra no mês pela data de conclusão. OS entregue sem data_conclusao não é contada.
         entregues_no_mes = [o for o in ordem_servico_repository.listar_por_status("ENTREGUE")
                             if esta_entre(o["data_conclusao"], inicio_mes, fim_mes)]
-        faturamento = round(sum(o["valor_total"] for o in entregues_no_mes), 2)
+        faturamento = round(sum(o.get("valor_total", 0) for o in entregues_no_mes), 2)
 
     return {
         "em_servico": len(em_servico),

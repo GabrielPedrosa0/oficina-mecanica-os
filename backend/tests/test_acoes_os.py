@@ -2,6 +2,7 @@ from datetime import datetime
 
 import pytest
 
+from repositories import ordem_servico_repository
 from services import dashboard_service
 
 
@@ -29,7 +30,16 @@ def test_status_devolve_a_os_completa(client, os_corpo):
     os_ = mudar(client, "PRONTA").json()
     assert os_["placa"] == "QRS4F21"
     assert os_["cliente_nome"] == "Marina Souza"
-    assert os_["mecanico"] == "Rafael"  # os outros campos ficam como estavam
+    assert os_["mecanico_id"] == 1  # os outros campos ficam como estavam
+
+
+# Cancelar: o cliente recusou o orçamento. A OS fica guardada como histórico.
+def test_cancelar(client, os_corpo):
+    nova_os(client, os_corpo, status="ORCAMENTO")
+    r = mudar(client, "CANCELADA")
+    assert r.status_code == 200
+    assert r.json()["status"] == "CANCELADA"
+    assert client.get("/api/ordens-servico/1").json()["status"] == "CANCELADA"
 
 
 @pytest.mark.parametrize("de, para", [
@@ -42,6 +52,13 @@ def test_status_devolve_a_os_completa(client, os_corpo):
     ("PRONTA", "ORCAMENTO"),
     ("ENTREGUE", "EM_SERVICO"),
     ("ENTREGUE", "PRONTA"),
+    # Só se cancela no ORCAMENTO; e de CANCELADA não se sai.
+    ("EM_SERVICO", "CANCELADA"),
+    ("AGUARDANDO_PECA", "CANCELADA"),
+    ("PRONTA", "CANCELADA"),
+    ("ENTREGUE", "CANCELADA"),
+    ("CANCELADA", "ORCAMENTO"),
+    ("CANCELADA", "EM_SERVICO"),
 ])
 def test_transicao_proibida_409_e_nao_altera(client, os_corpo, de, para):
     nova_os(client, os_corpo, status=de)
@@ -88,7 +105,9 @@ def test_data_de_conclusao_nunca_fica_antes_da_abertura(client, os_corpo, monkey
 
 def test_os_entregue_entra_no_faturamento_do_painel(client, os_corpo, monkeypatch):
     monkeypatch.setattr(dashboard_service, "agora", lambda: datetime(2026, 11, 20, 10, 30, 0))
-    nova_os(client, os_corpo, status="PRONTA", valor_total=340)
+    nova_os(client, os_corpo, status="PRONTA")
+    # O valor total não vai no corpo da OS; aqui gravamos direto, como no teste do painel.
+    ordem_servico_repository.ordens[1]["valor_total"] = 340
     assert dashboard_service.obter_resumo(True)["faturamento_mes"] == 0
     mudar(client, "ENTREGUE")
     assert dashboard_service.obter_resumo(True)["faturamento_mes"] == 340.0
@@ -104,7 +123,7 @@ def test_marcar_pronta(client, os_corpo):
     assert client.get("/api/ordens-servico/1").json()["status"] == "PRONTA"
 
 
-@pytest.mark.parametrize("de", ["ORCAMENTO", "AGUARDANDO_PECA", "PRONTA", "ENTREGUE"])
+@pytest.mark.parametrize("de", ["ORCAMENTO", "AGUARDANDO_PECA", "PRONTA", "ENTREGUE", "CANCELADA"])
 def test_marcar_pronta_fora_do_momento_409(client, os_corpo, de):
     nova_os(client, os_corpo, status=de)
     r = client.post("/api/ordens-servico/1/marcar-pronta")
@@ -114,15 +133,17 @@ def test_marcar_pronta_fora_do_momento_409(client, os_corpo, de):
 
 # --- Enviar orçamento ---
 
-def adicionar(client, valor, tipo="SERVICO"):
-    client.post("/api/ordens-servico/1/itens", json={"descricao": "Item", "tipo": tipo, "valor": valor})
+# item_id 1 = Peça e 2 = Serviço, os itens que o catálogo já traz.
+def adicionar(client, valor, item_id=2, quantidade=1):
+    client.post("/api/ordens-servico/1/itens",
+                json={"item_id": item_id, "descricao": "Item", "quantidade": quantidade, "valor_unitario": valor})
 
 
 def test_enviar_orcamento_registra_o_envio_e_soma_os_itens(client, os_corpo, monkeypatch):
     monkeypatch.setattr(dashboard_service, "agora", lambda: datetime(2026, 11, 12, 9, 0, 0))
     nova_os(client, os_corpo, status="ORCAMENTO")
     adicionar(client, 150)
-    adicionar(client, 190.5, "PECA")
+    adicionar(client, 95.25, item_id=1, quantidade=2)  # 2 × 95,25 = 190,50
     r = client.post("/api/ordens-servico/1/enviar-orcamento")
     assert r.status_code == 200
     corpo = r.json()
@@ -143,3 +164,12 @@ def test_enviar_orcamento_de_os_concluida_409(client, os_corpo, status):
     nova_os(client, os_corpo, status=status)
     adicionar(client, 100)
     assert client.post("/api/ordens-servico/1/enviar-orcamento").status_code == 409
+
+
+# OS cancelada não tem orçamento para enviar (409).
+def test_enviar_orcamento_de_os_cancelada_409(client, os_corpo):
+    nova_os(client, os_corpo, status="CANCELADA")
+    adicionar(client, 100)
+    r = client.post("/api/ordens-servico/1/enviar-orcamento")
+    assert r.status_code == 409
+    assert r.json()["detail"] == "A OS foi cancelada: não há orçamento para enviar."

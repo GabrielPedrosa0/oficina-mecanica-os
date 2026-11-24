@@ -50,3 +50,11 @@ def listar_por_veiculos(veiculo_ids):
 # OS cujo status é um dos informados. Ex.: listar_por_status("EM_SERVICO", "PRONTA").
 def listar_por_status(*status):
     return [o for o in ordens.values() if o["status"] in status]
+
+
+# Tira o mecânico das ordens dele: elas voltam para "A definir" (mecanico_id = None).
+# É o que o banco faz com ON DELETE SET NULL quando o mecânico é excluído.
+def desvincular_mecanico(mecanico_id: int):
+    for ordem in ordens.values():
+        if ordem.get("mecanico_id") == mecanico_id:
+            ordem["mecanico_id"] = None

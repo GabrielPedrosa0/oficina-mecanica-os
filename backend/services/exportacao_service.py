@@ -11,6 +11,7 @@ STATUS_ROTULO = {
     "AGUARDANDO_PECA": "Aguardando peça",
     "PRONTA": "Pronta",
     "ENTREGUE": "Entregue",
+    "CANCELADA": "Cancelada",
 }
 
 
