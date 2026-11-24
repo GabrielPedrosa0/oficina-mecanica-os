@@ -2,6 +2,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { usuarioSalvo } from '../../services/authService'
 import BarraAbas from './BarraAbas'
 import BarraSuperior from './BarraSuperior'
+import BotaoSair from './BotaoSair'
 import MenuLateral from './MenuLateral'
 import './layout.css'
 
@@ -14,7 +15,10 @@ export default function LayoutPrincipal({ children }) {
     <div className="layout">
       <MenuLateral usuario={usuarioMenu} />
       <div className="layout__principal">
-        <BarraSuperior onBuscar={(texto) => navigate(`/ordens?busca=${encodeURIComponent(texto)}`)} />
+        <BarraSuperior
+          onBuscar={(texto) => navigate(`/ordens?busca=${encodeURIComponent(texto)}`)}
+          direita={<BotaoSair />}
+        />
         <main className="layout__conteudo">{children ?? <Outlet />}</main>
       </div>
       <BarraAbas />

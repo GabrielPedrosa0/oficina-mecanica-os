@@ -1,0 +1,44 @@
+/* Painel / Início */
+.painel__indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--espaco-4);
+}
+
+.painel__secao-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-3);
+  margin-bottom: var(--espaco-3);
+}
+.painel__secao-titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  margin: 0;
+  font: 600 22px/28px var(--fonte-titulo);
+  color: var(--texto-principal);
+}
+.painel__contagem {
+  min-width: 24px;
+  padding: 2px var(--espaco-2);
+  border-radius: var(--raio-total);
+  background: var(--fundo-primario-sutil);
+  color: var(--texto-primario);
+  font: 600 13px/20px var(--fonte-texto);
+  text-align: center;
+}
+
+.painel__cartoes {
+  display: grid;
+  gap: var(--espaco-3);
+  margin-bottom: var(--espaco-3);
+}
+
+@media (max-width: 899px) {
+  .painel__indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--espaco-3);
+  }
+}

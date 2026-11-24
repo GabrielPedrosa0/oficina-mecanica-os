@@ -1,0 +1,18 @@
+/* Barra fina no topo das telas internas: nome do usuário + botão Sair. */
+.barra-sessao {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--espaco-3);
+  padding: var(--espaco-2) var(--espaco-4);
+  background: var(--fundo-superficie);
+  border-bottom: 1px solid var(--borda-padrao);
+}
+.barra-sessao__usuario {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 14px/20px var(--fonte-texto);
+  color: var(--texto-secundario);
+}

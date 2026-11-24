@@ -1,0 +1,102 @@
+/* Tela de login: painel escuro com a marca à esquerda (PC) e o formulário à direita. */
+.login {
+  display: grid;
+  grid-template-columns: minmax(320px, 2fr) 3fr;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--fundo-pagina);
+}
+
+.login__marca {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--espaco-10);
+  background: var(--fundo-invertido);
+  color: var(--texto-invertido);
+}
+
+.login__frase {
+  display: grid;
+  gap: var(--espaco-3);
+  max-width: 420px;
+}
+.login__frase-titulo {
+  margin: 0;
+  font: 600 40px/44px var(--fonte-titulo);
+}
+.login__frase-texto {
+  margin: 0;
+  font: 400 16px/24px var(--fonte-texto);
+  color: var(--texto-invertido-apoio);
+}
+
+.login__conteudo {
+  display: grid;
+  place-items: center;
+  padding: var(--espaco-8) var(--espaco-4);
+}
+
+.login__cartao {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--espaco-8);
+  background: var(--fundo-superficie);
+  border: 1px solid var(--borda-padrao);
+  border-radius: var(--raio-g);
+  box-shadow: var(--sombra-cartao);
+}
+
+.login__logo-celular {
+  display: none;
+  margin-bottom: var(--espaco-6);
+}
+
+.login__form {
+  display: grid;
+  gap: var(--espaco-4);
+}
+
+.login__titulo {
+  margin: 0;
+  font: 600 32px/36px var(--fonte-titulo);
+  color: var(--texto-principal);
+}
+.login__subtitulo {
+  margin: var(--espaco-1) 0 0;
+  font: 400 14px/20px var(--fonte-texto);
+  color: var(--texto-secundario);
+}
+
+.login__link {
+  justify-self: end;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 500 14px/20px var(--fonte-texto);
+  color: var(--texto-primario);
+  cursor: pointer;
+}
+.login__link:hover {
+  text-decoration: underline;
+}
+.login__link:focus-visible {
+  outline: 2px solid var(--borda-foco);
+  outline-offset: 2px;
+  border-radius: var(--raio-p);
+}
+
+@media (max-width: 899px) {
+  .login {
+    grid-template-columns: 1fr;
+  }
+  .login__marca {
+    display: none;
+  }
+  .login__logo-celular {
+    display: block;
+  }
+  .login__cartao {
+    padding: var(--espaco-6);
+  }
+}
