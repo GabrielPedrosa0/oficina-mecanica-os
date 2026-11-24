@@ -1,7 +1,6 @@
 // Status da ordem de serviço. Integrante 3.
 // Os códigos (chaves) são os mesmos do backend: schemas/ordem_servico_schema.py e core/enums.py.
-// CANCELADO está na especificação (seção 2.1) e no Figma, mas ainda não existe no backend:
-// quando o Integrante 3 incluir, nada precisa mudar aqui.
+// O código do cancelamento é CANCELADA (como no backend e no CHECK ck_os_status); o texto mostrado é "Cancelado".
 //
 // `tom` liga o status à cor do selo (ver SeloStatus.jsx e --status-* no tokens.css).
 // Status sempre aparece com texto, nunca só com cor.
@@ -17,7 +16,7 @@ export const STATUS_OS = {
   },
   PRONTA: { valor: 'PRONTA', rotulo: 'Pronto', rotuloFiltro: 'Prontas', tom: 'sucesso' },
   ENTREGUE: { valor: 'ENTREGUE', rotulo: 'Entregue', rotuloFiltro: 'Entregues', tom: 'entregue' },
-  CANCELADO: { valor: 'CANCELADO', rotulo: 'Cancelado', rotuloFiltro: 'Canceladas', tom: 'perigo' },
+  CANCELADA: { valor: 'CANCELADA', rotulo: 'Cancelado', rotuloFiltro: 'Canceladas', tom: 'perigo' },
 }
 
 // Na ordem do ciclo da OS.
@@ -51,15 +50,15 @@ export const ACAO_PRINCIPAL = {
   PRONTA: { rotulo: 'Entregar veículo', proximo: 'ENTREGUE' },
 }
 
-// Para onde cada status pode ir (seção 2.1). O backend é quem decide de verdade;
-// isto serve só para esconder botões que não fazem sentido.
+// Para onde cada status pode ir (espelha TRANSICOES de backend/services/acao_os_service.py).
+// O backend é quem decide de verdade (409); isto serve só para esconder botões que não fazem sentido.
 export const TRANSICOES = {
-  ORCAMENTO: ['EM_SERVICO', 'CANCELADO'],
-  EM_SERVICO: ['AGUARDANDO_PECA', 'PRONTA', 'CANCELADO'],
-  AGUARDANDO_PECA: ['EM_SERVICO', 'CANCELADO'],
-  PRONTA: ['ENTREGUE'],
+  ORCAMENTO: ['EM_SERVICO', 'CANCELADA'],
+  EM_SERVICO: ['AGUARDANDO_PECA', 'PRONTA'],
+  AGUARDANDO_PECA: ['EM_SERVICO'],
+  PRONTA: ['ENTREGUE', 'EM_SERVICO'],
   ENTREGUE: [],
-  CANCELADO: [],
+  CANCELADA: [],
 }
 
 export function dadosStatus(status) {
@@ -72,7 +71,7 @@ export function rotuloStatus(status) {
 
 // OS entregue ou cancelada fica só para leitura.
 export function statusEncerrado(status) {
-  return status === 'ENTREGUE' || status === 'CANCELADO'
+  return status === 'ENTREGUE' || status === 'CANCELADA'
 }
 
 export function podeMudar(de, para) {

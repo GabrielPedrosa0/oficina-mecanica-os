@@ -38,7 +38,7 @@ function filtrarTodas(lista) {
   const limite = Date.now() - TRINTA_DIAS
   return lista.filter(
     (o) =>
-      o.status !== 'CANCELADO' && !(o.status === 'ENTREGUE' && new Date(o.data_conclusao ?? o.data_abertura) < limite),
+      o.status !== 'CANCELADA' && !(o.status === 'ENTREGUE' && new Date(o.data_conclusao ?? o.data_abertura) < limite),
   )
 }
 
