@@ -23,7 +23,7 @@ export const exportarOrdensCSV = ({ status, placa, cliente } = {}) =>
 
 // ---- Ações (Integrante 3, backend/routers/acoes_os.py) ----
 
-// PATCH /api/ordens-servico/1042/status  { status, motivo? }  (motivo obrigatório para CANCELADO)
+// PATCH /api/ordens-servico/1042/status  { status, motivo? }  (motivo hoje o backend ignora; pedido na tela ao CANCELADA)
 export const mudarStatus = (id, status, motivo) =>
   apiPatch(`/ordens-servico/${id}/status`, { status, ...(motivo ? { motivo } : {}) })
 

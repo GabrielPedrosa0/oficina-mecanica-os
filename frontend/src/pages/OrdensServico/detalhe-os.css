@@ -1,0 +1,127 @@
+/* Detalhe da OS. Só cores e espaços dos tokens (var(--...)). */
+
+.detalhe-os__identificacao {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--espaco-3);
+  padding: var(--espaco-3) 0 0;
+}
+.detalhe-os__garantia {
+  font: 600 14px/20px var(--fonte-texto);
+  color: var(--texto-primario);
+}
+.detalhe-os__secundarias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-2);
+}
+.detalhe-os__texto {
+  margin: 0;
+  color: var(--texto-principal);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Celular: uma coluna. As duas colunas "somem" e os blocos se ordenam pela ordem do Figma. */
+.detalhe-os {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-4);
+}
+.detalhe-os__coluna {
+  display: contents;
+}
+.detalhe-os__bloco--ordem {
+  order: 1;
+}
+.detalhe-os__bloco--veiculo {
+  order: 2;
+}
+.detalhe-os__bloco--cliente {
+  order: 3;
+}
+.detalhe-os__bloco--itens {
+  order: 4;
+}
+.detalhe-os__bloco--relato {
+  order: 5;
+}
+.detalhe-os__bloco--apontamentos {
+  order: 6;
+}
+
+/* PC: serviços e apontamentos à esquerda, cartões de dados à direita. */
+@media (min-width: 900px) {
+  .detalhe-os {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    align-items: start;
+    gap: var(--espaco-6);
+  }
+  .detalhe-os__coluna {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espaco-4);
+    min-width: 0;
+  }
+}
+
+/* Campo lado a lado nos formulários dos modais (quantidade e valor). */
+.linha-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espaco-3);
+}
+
+/* Texto do orçamento no modal. */
+.orcamento-texto {
+  margin: 0;
+  padding: var(--espaco-3);
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  font: 400 14px/20px var(--fonte-texto);
+  color: var(--texto-principal);
+  background: var(--fundo-sutil);
+  border: 1px solid var(--borda-padrao);
+  border-radius: var(--raio-m);
+}
+
+/* Imprimir: sem menu, abas, botões e modais; só os dados, os itens e o total. */
+@media print {
+  .menu-lateral,
+  .barra-superior,
+  .barra-abas,
+  .rodape-acoes,
+  .cabecalho-pagina__acoes,
+  .cabecalho-pagina__voltar,
+  .detalhe-os__secundarias,
+  .itens-os__adicionar,
+  .itens-os__acoes,
+  .aviso,
+  .modal {
+    display: none !important;
+  }
+  .layout {
+    display: block;
+    padding: 0;
+  }
+  .cabecalho-pagina {
+    position: static;
+  }
+  .pagina {
+    padding: var(--espaco-4) 0;
+    max-width: none;
+  }
+  .detalhe-os {
+    display: block;
+  }
+  .detalhe-os__coluna {
+    display: block;
+  }
+  .detalhe-os__bloco {
+    break-inside: avoid;
+    margin-bottom: var(--espaco-4);
+  }
+}
