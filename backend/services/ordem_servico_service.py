@@ -69,6 +69,14 @@ def buscar_ordem(id: int):
     return ordem
 
 
+# Exige a OS aberta (nem entregue nem cancelada): fechada, é só para leitura (409).
+def exigir_aberta(ordem):
+    if ordem["status"] == "ENTREGUE":
+        raise HTTPException(status_code=409, detail="A OS já foi entregue: ela é só para leitura.")
+    if ordem["status"] == "CANCELADA":
+        raise HTTPException(status_code=409, detail="A OS foi cancelada: ela é só para leitura.")
+
+
 # A OS com os dados que as telas mostram: placa, veículo e cliente.
 # Eles vêm do veículo e do cliente na hora da leitura, não ficam gravados na OS.
 # mecanico, servico e valor_total também são da leitura. Enquanto os itens da OS
@@ -117,6 +125,7 @@ def cadastrar_ordem(entrada: OrdemServico):
 
 def atualizar_ordem(id: int, entrada: OrdemServico):
     atual = buscar_ordem(id)
+    exigir_aberta(atual)
     return ordem_completa(ordem_servico_repository.atualizar(id, validar_ordem(entrada, atual)))
 
 

@@ -31,7 +31,7 @@ def listar_entregas_hoje(
     offset: int = Query(0, ge=0, description="Quantos itens pular (para carregar mais ao rolar)."),
 ):
     """
-    Cartões **"Entregas de hoje"** do **Início (celular)**: OS ainda não entregues com
+    Cartões **"Entregas de hoje"** do **Início (celular)**: OS ainda não entregues nem canceladas com
     `data_previsao` hoje, da mais cedo para a mais tarde. Carregue a próxima página com
     `offset` enquanto `tem_mais` for `true`. Sem entregas, `itens` vem vazio e
     `mensagem_vazia` traz o texto do estado vazio.
@@ -45,7 +45,7 @@ def listar_ordens_recentes(
     limite: int = Query(dashboard_service.LIMITE_RECENTES, ge=1, le=50, description="Máximo de ordens."),
 ):
     """
-    Tabela **"Ordens recentes"** do **Painel (PC)**: OS ainda não entregues, da entrada
+    Tabela **"Ordens recentes"** do **Painel (PC)**: OS ainda não entregues nem canceladas, da entrada
     mais nova para a mais antiga. Clicar em uma linha abre `GET /api/ordens-servico/{id}`.
     """
     return dashboard_service.listar_ordens_recentes(limite)

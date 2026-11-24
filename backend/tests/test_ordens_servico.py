@@ -158,6 +158,24 @@ def test_atualizar_invalido(client, os_corpo):
     assert r.status_code == 422
 
 
+# Regra da OS só leitura: entregue ou cancelada não se edita (409, e nada muda).
+# Nos outros status a edição passa.
+@pytest.mark.parametrize("status, esperado", [
+    ("ORCAMENTO", 200),
+    ("EM_SERVICO", 200),
+    ("AGUARDANDO_PECA", 200),
+    ("PRONTA", 200),
+    ("ENTREGUE", 409),
+    ("CANCELADA", 409),
+])
+def test_atualizar_os_fechada(client, os_corpo, status, esperado):
+    client.post("/api/ordens-servico", json={**os_corpo, "status": status})
+    r = client.put("/api/ordens-servico/1", json={**os_corpo, "status": status, "observacoes": "Nova"})
+    assert r.status_code == esperado
+    gravada = client.get("/api/ordens-servico/1").json()
+    assert (gravada["observacoes"] == "Nova") == (esperado == 200)
+
+
 # Atualizar OS inexistente dá 404.
 def test_atualizar_inexistente(client, os_corpo):
     assert client.put("/api/ordens-servico/99", json=os_corpo).status_code == 404

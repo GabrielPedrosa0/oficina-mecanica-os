@@ -1,5 +1,7 @@
 import pytest
 
+from repositories import ordem_servico_repository
+
 # O item_id aponta para o catálogo: 1 = Peça e 2 = Serviço já vêm cadastrados.
 ITEM = {"item_id": 2, "descricao": "Troca de pastilhas de freio", "quantidade": 1, "valor_unitario": 150.0}
 
@@ -114,3 +116,27 @@ def test_excluir_item(client, os_):
     assert client.delete("/api/ordens-servico/1/itens/1").status_code == 204
     assert client.get("/api/ordens-servico/1/itens").json() == []
     assert client.delete("/api/ordens-servico/1/itens/1").status_code == 404
+
+
+# Regra da OS só leitura: entregue ou cancelada não aceita incluir, editar nem excluir
+# item (409, e nada muda). Nos outros status pode. O item entra antes de a OS fechar.
+@pytest.mark.parametrize("status, esperado", [
+    ("ORCAMENTO", None),
+    ("EM_SERVICO", None),
+    ("AGUARDANDO_PECA", None),
+    ("PRONTA", None),
+    ("ENTREGUE", "A OS já foi entregue: ela é só para leitura."),
+    ("CANCELADA", "A OS foi cancelada: ela é só para leitura."),
+])
+def test_os_fechada(client, os_, status, esperado):
+    novo_item(client)
+    ordem_servico_repository.ordens[1]["status"] = status
+    respostas = (novo_item(client),
+                 client.put("/api/ordens-servico/1/itens/1", json={**ITEM, "valor_unitario": 200}),
+                 client.delete("/api/ordens-servico/1/itens/1"))
+    if esperado is None:
+        assert [r.status_code for r in respostas] == [201, 200, 204]
+    else:
+        assert [r.status_code for r in respostas] == [409, 409, 409]
+        assert all(r.json()["detail"] == esperado for r in respostas)
+        assert [i["valor_unitario"] for i in client.get("/api/ordens-servico/1/itens").json()] == [150.0]
