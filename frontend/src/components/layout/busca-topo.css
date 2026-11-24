@@ -1,0 +1,39 @@
+/* Resultados da busca do topo (issue #47). Só usa as variáveis de tokens.css. */
+.busca-topo {
+  position: relative;
+  flex: 1;
+  max-width: 520px;
+}
+
+.busca-topo__painel {
+  position: absolute;
+  top: calc(100% + var(--espaco-2));
+  left: 0;
+  right: 0;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: var(--espaco-2);
+  background: var(--fundo-superficie);
+  border: 1px solid var(--borda-padrao);
+  border-radius: var(--raio-m);
+  box-shadow: var(--sombra-flutuante);
+}
+
+.busca-topo__titulo {
+  margin: 0;
+  padding: var(--espaco-2) var(--espaco-3);
+  color: var(--texto-apoio);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.busca-topo__aviso {
+  margin: 0;
+  padding: var(--espaco-3);
+  color: var(--texto-secundario);
+}
+
+.busca-topo__aviso--erro {
+  color: var(--texto-perigo);
+}
