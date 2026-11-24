@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 # Estados da OS (os mesmos do CHECK ck_os_status do banco).
-Status = Literal["ORCAMENTO", "EM_SERVICO", "AGUARDANDO_PECA", "PRONTA", "ENTREGUE"]
+Status = Literal["ORCAMENTO", "EM_SERVICO", "AGUARDANDO_PECA", "PRONTA", "ENTREGUE", "CANCELADA"]
 
 
 # O corpo de POST e PUT /api/ordens-servico, por exemplo

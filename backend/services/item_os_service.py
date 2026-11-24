@@ -52,16 +52,19 @@ def listar_itens(os_id: int):
     return [item_completo(i) for i in item_os_repository.listar_da_os(os_id)]
 
 
+# Incluir, editar e excluir item só em OS que ainda pode mudar (nem entregue nem cancelada).
 def cadastrar_item(os_id: int, entrada: ItemOrdemServico):
-    ordem_servico_service.buscar_ordem(os_id)
+    ordem_servico_service.exigir_aberta(ordem_servico_service.buscar_ordem(os_id))
     return item_completo(item_os_repository.criar({"os_id": os_id, **validar(entrada)}))
 
 
 def atualizar_item(os_id: int, item_os_id: int, entrada: ItemOrdemServico):
     buscar_item(os_id, item_os_id)
+    ordem_servico_service.exigir_aberta(ordem_servico_service.buscar_ordem(os_id))
     return item_completo(item_os_repository.atualizar(item_os_id, {"os_id": os_id, **validar(entrada)}))
 
 
 def excluir_item(os_id: int, item_os_id: int):
     buscar_item(os_id, item_os_id)
+    ordem_servico_service.exigir_aberta(ordem_servico_service.buscar_ordem(os_id))
     item_os_repository.excluir(item_os_id)

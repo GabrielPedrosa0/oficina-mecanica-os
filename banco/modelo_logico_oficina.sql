@@ -1,4 +1,5 @@
--- Modelo lógico da oficina (PostgreSQL) - versão 8
+-- Modelo lógico da oficina (PostgreSQL) - versão 9
+-- Mudanças da v9: o status da OS ganha o valor 'CANCELADA' (o cliente recusou o orçamento).
 -- Mudanças da v8: em apontamento, a coluna data_hora vira data (o mesmo nome do modelo
 -- conceitual e da API) e o tipo passa a ter os 8 momentos da OS que as telas mostram.
 -- Mudanças da v6: peça e serviço viram um catálogo único, a tabela item (com tipo
@@ -96,7 +97,7 @@ CREATE TABLE os (
     observacoes           text,
     orcamento_enviado_em  timestamp,
     CONSTRAINT ck_os_status CHECK (status IN
-        ('ORCAMENTO', 'EM_SERVICO', 'AGUARDANDO_PECA', 'PRONTA', 'ENTREGUE')),
+        ('ORCAMENTO', 'EM_SERVICO', 'AGUARDANDO_PECA', 'PRONTA', 'ENTREGUE', 'CANCELADA')),
     CONSTRAINT ck_os_km        CHECK (km_entrada >= 0),
     CONSTRAINT ck_os_previsao  CHECK (data_previsao  >= data_abertura),
     CONSTRAINT ck_os_conclusao CHECK (data_conclusao >= data_abertura),

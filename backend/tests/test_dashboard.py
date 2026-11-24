@@ -160,6 +160,7 @@ def test_ordens_recentes(client, os_corpo):
     nova_os(client, os_corpo, data_abertura="2026-11-11T08:00:00", data_previsao=None, status="ORCAMENTO")
     nova_os(client, os_corpo, data_abertura="2026-11-10T08:00:00", data_previsao=None, status="ENTREGUE")
     nova_os(client, os_corpo, data_abertura="2026-11-10T08:00:00", data_previsao=None, status="PRONTA")
+    nova_os(client, os_corpo, data_abertura="2026-11-11T09:00:00", data_previsao=None, status="CANCELADA")
     r = client.get("/api/dashboard/ordens-recentes").json()
     assert [o["id"] for o in r["itens"]] == [2, 4, 1]
     assert r["total"] == 3

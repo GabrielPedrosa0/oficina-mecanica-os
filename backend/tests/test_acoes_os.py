@@ -33,6 +33,15 @@ def test_status_devolve_a_os_completa(client, os_corpo):
     assert os_["mecanico_id"] == 1  # os outros campos ficam como estavam
 
 
+# Cancelar: o cliente recusou o orçamento. A OS fica guardada como histórico.
+def test_cancelar(client, os_corpo):
+    nova_os(client, os_corpo, status="ORCAMENTO")
+    r = mudar(client, "CANCELADA")
+    assert r.status_code == 200
+    assert r.json()["status"] == "CANCELADA"
+    assert client.get("/api/ordens-servico/1").json()["status"] == "CANCELADA"
+
+
 @pytest.mark.parametrize("de, para", [
     ("ORCAMENTO", "PRONTA"),
     ("ORCAMENTO", "ENTREGUE"),
@@ -43,6 +52,13 @@ def test_status_devolve_a_os_completa(client, os_corpo):
     ("PRONTA", "ORCAMENTO"),
     ("ENTREGUE", "EM_SERVICO"),
     ("ENTREGUE", "PRONTA"),
+    # Só se cancela no ORCAMENTO; e de CANCELADA não se sai.
+    ("EM_SERVICO", "CANCELADA"),
+    ("AGUARDANDO_PECA", "CANCELADA"),
+    ("PRONTA", "CANCELADA"),
+    ("ENTREGUE", "CANCELADA"),
+    ("CANCELADA", "ORCAMENTO"),
+    ("CANCELADA", "EM_SERVICO"),
 ])
 def test_transicao_proibida_409_e_nao_altera(client, os_corpo, de, para):
     nova_os(client, os_corpo, status=de)
@@ -107,7 +123,7 @@ def test_marcar_pronta(client, os_corpo):
     assert client.get("/api/ordens-servico/1").json()["status"] == "PRONTA"
 
 
-@pytest.mark.parametrize("de", ["ORCAMENTO", "AGUARDANDO_PECA", "PRONTA", "ENTREGUE"])
+@pytest.mark.parametrize("de", ["ORCAMENTO", "AGUARDANDO_PECA", "PRONTA", "ENTREGUE", "CANCELADA"])
 def test_marcar_pronta_fora_do_momento_409(client, os_corpo, de):
     nova_os(client, os_corpo, status=de)
     r = client.post("/api/ordens-servico/1/marcar-pronta")
@@ -148,3 +164,12 @@ def test_enviar_orcamento_de_os_concluida_409(client, os_corpo, status):
     nova_os(client, os_corpo, status=status)
     adicionar(client, 100)
     assert client.post("/api/ordens-servico/1/enviar-orcamento").status_code == 409
+
+
+# OS cancelada não tem orçamento para enviar (409).
+def test_enviar_orcamento_de_os_cancelada_409(client, os_corpo):
+    nova_os(client, os_corpo, status="CANCELADA")
+    adicionar(client, 100)
+    r = client.post("/api/ordens-servico/1/enviar-orcamento")
+    assert r.status_code == 409
+    assert r.json()["detail"] == "A OS foi cancelada: não há orçamento para enviar."

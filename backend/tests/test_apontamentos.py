@@ -132,3 +132,12 @@ def test_os_entregue(client, os_corpo, status, esperado):
     if esperado == 409:
         assert r.json()["detail"] == "A OS já foi entregue: os apontamentos são só para leitura."
         assert listar(client).status_code == 200  # ler continua permitido
+
+
+# OS cancelada também é só para leitura (409), mas ler continua permitido.
+def test_os_cancelada(client, os_corpo):
+    client.post("/api/ordens-servico", json={**os_corpo, "status": "CANCELADA"})
+    r = registrar(client)
+    assert r.status_code == 409
+    assert r.json()["detail"] == "A OS foi cancelada: os apontamentos são só para leitura."
+    assert listar(client).status_code == 200
