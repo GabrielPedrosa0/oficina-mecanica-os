@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from database import erros
 from routers import (
     acoes_os, agenda, apontamentos, autenticacao, busca, clientes, dashboard, exportacao, itens, itens_os,
-    mecanicos, ordens_servico, pecas, servicos, usuarios, veiculos,
+    mecanicos, ola_mundo, ordens_servico, pecas, servicos, usuarios, veiculos,
 )
 
 # A documentação fica em /api/docs, assim toda a aplicação mora em /api.
@@ -27,3 +27,4 @@ app.include_router(agenda.router)
 app.include_router(servicos.router)
 app.include_router(pecas.router)
 app.include_router(usuarios.router)
+app.include_router(ola_mundo.router)
