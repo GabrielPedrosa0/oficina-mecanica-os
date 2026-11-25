@@ -1,10 +1,9 @@
 # Regras de negócio das ordens de serviço.
-from datetime import datetime
-
 from fastapi import HTTPException
 
 from core.texto import limpar, normalizar, placa_confere
 from repositories import cliente_repository, mecanico_repository, ordem_servico_repository, veiculo_repository
+from services import dashboard_service
 from schemas.ordem_servico_schema import OrdemServico
 
 
@@ -40,7 +39,7 @@ def validar_ordem(entrada: OrdemServico, atual=None):
     elif atual is not None:
         abertura = atual["data_abertura"]
     else:
-        abertura = datetime.now().replace(microsecond=0)
+        abertura = dashboard_service.agora()
 
     if entrada.data_conclusao is not None and entrada.data_conclusao < abertura:
         raise HTTPException(status_code=422, detail="A data de conclusão não pode ser anterior à data de abertura.")

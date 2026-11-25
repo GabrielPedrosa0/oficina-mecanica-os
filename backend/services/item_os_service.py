@@ -1,7 +1,5 @@
 # Regras dos itens da OS (serviços e peças): validar os campos, apontar para um item
 # do catálogo e pertencer a uma OS que existe.
-import math
-
 from fastapi import HTTPException
 
 from repositories import item_os_repository, item_repository
@@ -16,9 +14,6 @@ def validar(entrada: ItemOrdemServico):
     descricao = entrada.descricao.strip()
     if descricao == "":
         raise HTTPException(status_code=422, detail="A descrição do item é obrigatória.")
-    # Regra da atividade: o valor do serviço precisa ser maior que zero.
-    if not math.isfinite(entrada.valor_unitario) or round(entrada.valor_unitario, 2) <= 0:
-        raise HTTPException(status_code=422, detail="O valor do item deve ser maior que zero.")
     return {"item_id": entrada.item_id, "descricao": descricao, "quantidade": entrada.quantidade,
             "valor_unitario": round(entrada.valor_unitario, 2)}
 

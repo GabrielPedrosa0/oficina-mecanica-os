@@ -55,8 +55,6 @@ def test_os_inexistente_404_em_todas_as_rotas_de_itens(client):
 
 
 @pytest.mark.parametrize("mudanca, trecho", [
-    ({"valor_unitario": 0}, "maior que zero"),
-    ({"valor_unitario": 0.001}, "maior que zero"),  # arredonda para 0,00
     ({"descricao": "   "}, "descrição"),
     ({"item_id": 99}, "catálogo"),
 ])
@@ -74,6 +72,13 @@ def test_campos_obrigatorios_e_invalidos_422(client, os_):
     assert novo_item(client, quantidade=0).status_code == 422
     assert novo_item(client, valor_unitario=-10).status_code == 422
     assert novo_item(client, valor_unitario="caro").status_code == 422
+
+
+# Item de valor zero (ex.: cortesia) entra na OS: quem decide o preço é o catálogo.
+def test_item_valor_zero(client, os_):
+    r = novo_item(client, valor_unitario=0)
+    assert r.status_code == 201
+    assert r.json()["valor_unitario"] == 0.0
 
 
 # A mesma peça pode entrar mais de uma vez na mesma OS.
@@ -95,7 +100,7 @@ def test_atualizar_item(client, os_):
 
 def test_atualizar_item_invalido_422_e_nao_altera(client, os_):
     novo_item(client)
-    assert client.put("/api/ordens-servico/1/itens/1", json={**ITEM, "valor_unitario": 0}).status_code == 422
+    assert client.put("/api/ordens-servico/1/itens/1", json={**ITEM, "valor_unitario": -10}).status_code == 422
     assert client.get("/api/ordens-servico/1/itens").json()[0]["valor_unitario"] == 150.0
 
 
