@@ -7,7 +7,12 @@ export default function ComoFunciona() {
     <>
       <h1 className="validacao__titulo">Como funciona</h1>
       <p className="validacao__texto">
-        São 4 tarefas curtas, como se você trabalhasse no balcão de uma oficina. Não precisa entender de oficina.
+        São 4 tarefas curtas, como se você trabalhasse na recepção de uma oficina mecânica. Não precisa entender de
+        oficina.
+      </p>
+      <p className="validacao__texto">
+        Na oficina, cada carro que chega para conserto ganha uma ordem de serviço (OS): a ficha com o problema do carro
+        e os serviços que serão feitos.
       </p>
       <p className="validacao__texto">
         Estamos testando o sistema, não você. Faça do jeito que achar melhor; quando a tarefa der certo, o sistema avisa
