@@ -111,7 +111,7 @@ export const TAREFAS = [
     numero: 1,
     titulo: 'Cadastrar cliente',
     cenario: (sessao) =>
-      `Chegou uma cliente nova na oficina: ${clienteDaSessao(sessao)}, telefone (11) 98765-4321. Cadastre essa cliente.`,
+      `Chegou uma cliente nova na oficina: ${clienteDaSessao(sessao)}, telefone (85) 98765-4321. Cadastre essa cliente.`,
     terminou: ({ metodo, caminho, status }) => metodo === 'POST' && caminho === '/clientes' && status === 201,
   },
   {
