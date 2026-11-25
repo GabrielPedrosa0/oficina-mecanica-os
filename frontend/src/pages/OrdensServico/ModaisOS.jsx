@@ -74,7 +74,7 @@ export function ModalItem({ aberto, osId, tipo, item, onFechar, onSalvo }) {
     const valor = paraNumero(form.valor_unitario)
     const encontrados = validar({
       descricao: obrigatorio(form.descricao, 'Informe a descrição.'),
-      quantidade: !(quantidade > 0) ? 'A quantidade precisa ser maior que zero.' : null,
+      quantidade: !(Number.isInteger(quantidade) && quantidade > 0) ? 'A quantidade precisa ser um número inteiro maior que zero.' : null,
       valor_unitario: Number.isNaN(valor) || valor < 0 ? 'Informe um valor válido, ex.: 120,50.' : null,
     })
     setErros(encontrados)
