@@ -111,6 +111,9 @@ leitura ("2 veículos" na tela), não é coluna.
   Localmente, copie `backend/.env.example` para `backend/.env` e preencha.
 - **Criar as tabelas:** `cd backend && python -m database.criar_tabelas` (com `--exemplos` também entram 2 mecânicos).
   Não apaga nada se as tabelas já existem. Também dá para colar `banco/modelo_logico_oficina.sql` no SQL Editor do Supabase.
+- **Mudar o banco:** crie um `.sql` numerado em `banco/migracoes/` (veja o README de lá). No push para a `main`, o
+  GitHub Actions (`.github/workflows/migrar-banco.yml`) o aplica no Supabase; à mão: `python -m database.migrar`.
+  As já aplicadas ficam na tabela `migracao`. O workflow precisa do secret `DATABASE_URL` no GitHub.
 - **Repositories:** cada um descreve a sua tabela (campo da API → coluna, ex.: `quilometragem` → `km_atual`) com
   `database/tabela.py`. As funções continuam as mesmas, então services e rotas não mudaram.
 - **Leitura da OS:** traz `mecanico` (nome), `servico` (primeiro serviço lançado) e `valor_total` (visão `vw_os_total`).

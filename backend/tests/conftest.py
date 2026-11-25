@@ -3,7 +3,8 @@
 #
 # Os testes usam um PostgreSQL só deles, o do TEST_DATABASE_URL (no ambiente ou no backend/.env).
 # No começo, as tabelas desse banco são APAGADAS e criadas de novo a partir de
-# banco/modelo_logico_oficina.sql; antes de cada teste, elas são esvaziadas.
+# banco/modelo_logico_oficina.sql mais as migrações de banco/migracoes/; antes de cada teste,
+# elas são esvaziadas.
 # Por isso ele nunca pode ser o banco de verdade (DATABASE_URL). Sem TEST_DATABASE_URL, os
 # testes são pulados.
 #
@@ -16,7 +17,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from database import connection, erros
+from database import connection, erros, migrar
 from database.criar_tabelas import MODELO, rodar_arquivo
 from repositories import (
     acao_os_repository, apontamento_repository, cliente_repository, item_os_repository, item_repository,
@@ -41,6 +42,7 @@ def banco_de_teste():
     connection.executar("DROP SCHEMA public CASCADE")
     connection.executar("CREATE SCHEMA public")
     rodar_arquivo(MODELO)
+    migrar.aplicar_pendentes()
     yield
 
 
