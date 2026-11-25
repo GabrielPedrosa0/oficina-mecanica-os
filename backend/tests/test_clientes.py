@@ -30,6 +30,36 @@ def test_cliente_desde(client):
     assert r.json()["cliente_desde"] == "2024-03-10"
 
 
+# CPF/CNPJ e endereço que chegam na API são gravados e voltam na consulta.
+def test_cadastrar_com_endereco(client):
+    endereco = {"cpf_cnpj": "12345678901", "cep": "60000000", "logradouro": "Rua A", "numero": "10",
+                "complemento": "Casa 2", "bairro": "Centro", "cidade": "Fortaleza", "uf": "CE"}
+    r = client.post("/api/clientes", json={"nome": "Ana", "telefone": "85900000001", **endereco})
+    assert r.status_code == 201
+    salvo = client.get(f"/api/clientes/{r.json()['id']}").json()
+    assert {campo: salvo[campo] for campo in endereco} == endereco
+
+
+# CPF/CNPJ e campos do endereço são opcionais: ausente, vazio ou só espaços
+# vira None (partição válida sem valor); com texto, é gravado sem os espaços
+# em volta (limite: 1 caractere).
+CAMPOS_OPCIONAIS = ["cpf_cnpj", "cep", "logradouro", "numero", "complemento", "bairro", "cidade", "uf"]
+
+
+@pytest.mark.parametrize("valor, esperado", [
+    (None, None),
+    ("", None),
+    ("   ", None),
+    ("A", "A"),
+    (" A ", "A"),
+], ids=["ausente", "vazio", "so-espacos", "um-caractere", "um-caractere-com-espacos"])
+def test_campos_opcionais(client, valor, esperado):
+    corpo = {"nome": "Ana", "telefone": "85900000001", **{campo: valor for campo in CAMPOS_OPCIONAIS}}
+    r = client.post("/api/clientes", json=corpo)
+    assert r.status_code == 201
+    assert all(r.json()[campo] == esperado for campo in CAMPOS_OPCIONAIS)
+
+
 # Nome: partição válida (texto com 1 ou mais letras, limite = 1 caractere)
 # e inválida (vazio ou só espaços).
 @pytest.mark.parametrize("nome, status", [
@@ -178,6 +208,18 @@ def test_atualizar(client, cliente):
     assert c["telefone"] == "(85) 3222-1111"
     assert c["email"] == "marina@exemplo.com"
     assert client.get(f"/api/clientes/{cliente['id']}").json()["nome"] == "Marina S."
+
+
+# Atualizar o endereço: o novo é gravado e apagar o complemento (vazio) deixa None.
+def test_atualizar_endereco(client, cliente):
+    client.put(f"/api/clientes/{cliente['id']}", json={"nome": "Marina Souza", "telefone": "85900000001",
+                                                       "cep": "60000000", "complemento": "Casa 2"})
+    r = client.put(f"/api/clientes/{cliente['id']}", json={"nome": "Marina Souza", "telefone": "85900000001",
+                                                           "cep": "60110000", "complemento": ""})
+    assert r.status_code == 200
+    salvo = client.get(f"/api/clientes/{cliente['id']}").json()
+    assert salvo["cep"] == "60110000"
+    assert salvo["complemento"] is None
 
 
 # Atualizar com o e-mail de outro cliente: 409, e nada muda.

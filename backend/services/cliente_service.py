@@ -13,7 +13,8 @@ EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 # Confere os campos e devolve os dados prontos para gravar: telefone no formato
-# (85) 90000-0001 e e-mail em minúsculas. Na atualização, o id do próprio cliente
+# (85) 90000-0001 e e-mail em minúsculas. CPF/CNPJ e endereço são opcionais e
+# gravados como vieram (vazio vira None). Na atualização, o id do próprio cliente
 # é ignorado na checagem de e-mail repetido.
 def validar_cliente(entrada: Cliente, id: int | None = None):
     nome = entrada.nome.strip()
@@ -35,8 +36,11 @@ def validar_cliente(entrada: Cliente, id: int | None = None):
         if repetido is not None and repetido["id"] != id:
             raise HTTPException(status_code=409, detail="Já existe um cliente com esse e-mail.")
 
-    return {"nome": nome, "telefone": telefone, "email": email,
-            "cliente_desde": entrada.cliente_desde or date.today()}
+    return {"nome": nome, "cpf_cnpj": limpar(entrada.cpf_cnpj), "telefone": telefone, "email": email,
+            "cliente_desde": entrada.cliente_desde or date.today(),
+            "cep": limpar(entrada.cep), "logradouro": limpar(entrada.logradouro),
+            "numero": limpar(entrada.numero), "complemento": limpar(entrada.complemento),
+            "bairro": limpar(entrada.bairro), "cidade": limpar(entrada.cidade), "uf": limpar(entrada.uf)}
 
 
 # Devolve o cliente, ou responde 404 se não existe nenhum com esse id.
