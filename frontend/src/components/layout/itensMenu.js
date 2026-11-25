@@ -1,7 +1,20 @@
 // Itens do menu lateral (PC) e das abas (celular), como no Figma do MVP. Integrante 6.
 // Para incluir uma tela no menu, acrescente aqui e crie a rota em routes/AppRoutes.jsx.
 // `perfis` limita quem vê o item (ex.: Usuários só para o Gerente); sem `perfis`, todos veem.
-import { Car, ClipboardList, HardHat, KeyRound, LayoutDashboard, Menu, Package, Users, Wrench } from 'lucide-react'
+// `foraDaValidacao` esconde o item do participante do teste de usabilidade (modo validação).
+import {
+  Car,
+  ClipboardCheck,
+  ClipboardList,
+  HardHat,
+  KeyRound,
+  LayoutDashboard,
+  Menu,
+  Package,
+  Users,
+  Wrench,
+} from 'lucide-react'
+import { emValidacao } from '../../utils/modoValidacao'
 
 export const ITENS_MENU = [
   { para: '/', rotulo: 'Painel', icone: LayoutDashboard },
@@ -12,6 +25,7 @@ export const ITENS_MENU = [
   { para: '/servicos', rotulo: 'Serviços', icone: Wrench },
   { para: '/pecas', rotulo: 'Peças', icone: Package },
   { para: '/usuarios', rotulo: 'Usuários', icone: KeyRound, perfis: ['ADMIN'] },
+  { para: '/validacao/gerar-link', rotulo: 'Validação', icone: ClipboardCheck, foraDaValidacao: true },
 ]
 
 // Tela "Mais" do celular: o que não cabe na barra de abas, com a descrição do Figma.
@@ -26,6 +40,13 @@ export const ITENS_MAIS = [
     icone: KeyRound,
     perfis: ['ADMIN'],
   },
+  {
+    para: '/validacao/gerar-link',
+    rotulo: 'Validação',
+    descricao: 'Link do teste de usabilidade',
+    icone: ClipboardCheck,
+    foraDaValidacao: true,
+  },
 ]
 
 // Barra de abas do celular: no máximo 5. O resto fica em "Mais".
@@ -34,12 +55,18 @@ export const ABAS_CELULAR = [
   { para: '/ordens', rotulo: 'Ordens', icone: ClipboardList },
   { para: '/clientes', rotulo: 'Clientes', icone: Users },
   { para: '/veiculos', rotulo: 'Veículos', icone: Car },
-  { para: '/mais', rotulo: 'Mais', icone: Menu, inclui: ['/mecanicos', '/servicos', '/pecas', '/usuarios'] },
+  {
+    para: '/mais',
+    rotulo: 'Mais',
+    icone: Menu,
+    inclui: ['/mecanicos', '/servicos', '/pecas', '/usuarios', '/validacao'],
+  },
 ]
 
 // Filtra os itens pelo perfil do usuário. Sem usuário (ainda sem login), mostra tudo.
 export function itensDoPerfil(itens, perfil) {
-  if (!perfil) return itens
+  const visiveis = emValidacao() ? itens.filter((item) => !item.foraDaValidacao) : itens
+  if (!perfil) return visiveis
   const chave = String(perfil).toUpperCase()
-  return itens.filter((item) => !item.perfis || item.perfis.includes(chave))
+  return visiveis.filter((item) => !item.perfis || item.perfis.includes(chave))
 }

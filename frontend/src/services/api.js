@@ -14,6 +14,9 @@ export const CHAVE_USUARIO = 'oficina_usuario'
 // Evento disparado quando o backend responde 401 a um pedido com token (sessão expirou).
 // O RotaPrivada escuta e leva ao login com "Sua sessão expirou. Entre de novo."
 export const EVENTO_SESSAO_EXPIRADA = 'oficina:sessao-expirada'
+// Evento disparado a cada resposta do backend, com { metodo, caminho, status, id }.
+// O modo validação escuta e grava (ver utils/registrador.js); fora dele, ninguém escuta.
+export const EVENTO_CHAMADA_API = 'oficina:chamada-api'
 
 // Erro com o status HTTP e a mensagem que o backend mandou em `detail`.
 export class ErroApi extends Error {
@@ -91,13 +94,30 @@ function lerJson(texto) {
   }
 }
 
+// Avisa quem estiver escutando (o modo validação). O id vem de uma cópia da resposta, para a
+// tela ainda poder ler a original. status 0 = sem conexão.
+async function avisarChamada(caminho, metodo, resposta) {
+  let id = null
+  if (resposta?.ok && resposta.status !== 204) {
+    id = await resposta
+      .clone()
+      .json()
+      .then((corpo) => corpo?.id ?? null)
+      .catch(() => null)
+  }
+  const detalhe = { metodo: metodo ?? 'GET', caminho, status: resposta?.status ?? 0, id }
+  window.dispatchEvent(new CustomEvent(EVENTO_CHAMADA_API, { detail: detalhe }))
+}
+
 async function requisitar(caminho, opcoes = {}) {
   let resposta
   try {
     resposta = await fetch(`${API_BASE}${caminho}`, { ...opcoes, headers: cabecalhos(opcoes.headers) })
   } catch {
+    avisarChamada(caminho, opcoes.method, null)
     throw new ErroApi(MENSAGEM_DESLIGADO, 0)
   }
+  await avisarChamada(caminho, opcoes.method, resposta)
   if (!resposta.ok) {
     const texto = await resposta.text().catch(() => '')
     // Erro 5xx sem corpo nenhum = o repasse do Vite não achou o backend (ele está desligado).
