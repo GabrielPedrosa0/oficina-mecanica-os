@@ -22,7 +22,7 @@ export default function Cenario({ estado }) {
   return (
     <>
       <h1 className="validacao__titulo">Tarefa {tarefa.numero} de 4</h1>
-      <p className="validacao__cenario">{tarefa.cenario(estado.placa)}</p>
+      <p className="validacao__cenario">{tarefa.cenario(estado.sessao)}</p>
       <Botao larguraTotal data-validacao={jaComecou ? 'continuar' : 'comecar'} onClick={comecar}>
         {jaComecou ? 'Continuar' : 'Começar'}
       </Botao>

@@ -68,25 +68,64 @@ export function placaDaSessao(sessao) {
   return `VAL${sessao % 10}${letra}${final}`
 }
 
-// As 4 tarefas. `cenario` é a frase da tela antes do "Começar".
+// Cliente única de cada sessão, pelo mesmo motivo: com várias pessoas, a lista de clientes
+// teria várias "Ana Souza" iguais e a pessoa escolheria a de outra sessão. 10 nomes e 26
+// sobrenomes: o nome completo só se repete depois de 130 sessões.
+const NOMES = ['Ana', 'Bruna', 'Carla', 'Daniela', 'Elaine', 'Fernanda', 'Gabriela', 'Helena', 'Isabel', 'Juliana']
+const SOBRENOMES = [
+  'Souza',
+  'Almeida',
+  'Barbosa',
+  'Cardoso',
+  'Duarte',
+  'Esteves',
+  'Freitas',
+  'Gomes',
+  'Holanda',
+  'Machado',
+  'Lima',
+  'Lopes',
+  'Martins',
+  'Nogueira',
+  'Oliveira',
+  'Pereira',
+  'Queiroz',
+  'Ramos',
+  'Santana',
+  'Teixeira',
+  'Uchoa',
+  'Vieira',
+  'Xavier',
+  'Andrade',
+  'Batista',
+  'Campos',
+]
+export function clienteDaSessao(sessao) {
+  return `${NOMES[sessao % 10]} ${SOBRENOMES[sessao % 26]}`
+}
+
+// As 4 tarefas. `cenario` é a frase da tela antes do "Começar" (recebe o número da sessão).
 // `terminou` diz qual resposta do backend conclui a tarefa (a tela não pergunta "conseguiu?").
 export const TAREFAS = [
   {
     numero: 1,
     titulo: 'Cadastrar cliente',
-    cenario: () => 'Chegou uma cliente nova na oficina: Ana Souza, telefone (11) 98765-4321. Cadastre essa cliente.',
+    cenario: (sessao) =>
+      `Chegou uma cliente nova na oficina: ${clienteDaSessao(sessao)}, telefone (11) 98765-4321. Cadastre essa cliente.`,
     terminou: ({ metodo, caminho, status }) => metodo === 'POST' && caminho === '/clientes' && status === 201,
   },
   {
     numero: 2,
     titulo: 'Cadastrar veículo',
-    cenario: (placa) => `A Ana trouxe o carro dela: um Fiat Uno 2015, placa ${placa}. Cadastre esse veículo para ela.`,
+    cenario: (sessao) =>
+      `A ${clienteDaSessao(sessao)} trouxe o carro dela: um Fiat Uno 2015, placa ${placaDaSessao(sessao)}. Cadastre esse veículo para ela.`,
     terminou: ({ metodo, caminho, status }) => metodo === 'POST' && caminho === '/veiculos' && status === 201,
   },
   {
     numero: 3,
     titulo: 'Abrir ordem de serviço',
-    cenario: (placa) => `O Uno de placa ${placa} está com barulho no freio. Abra uma ordem de serviço para ele.`,
+    cenario: (sessao) =>
+      `O Uno de placa ${placaDaSessao(sessao)} está com barulho no freio. Abra uma ordem de serviço para ele.`,
     terminou: ({ metodo, caminho, status }) => metodo === 'POST' && caminho === '/ordens-servico' && status === 201,
   },
   {
