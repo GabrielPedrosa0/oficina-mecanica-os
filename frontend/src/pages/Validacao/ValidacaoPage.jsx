@@ -25,8 +25,9 @@ export default function ValidacaoPage() {
   const origem = busca.get('origem')?.toUpperCase() === 'PERSONA' ? 'PERSONA' : 'PESSOA'
   const estado = useModoValidacao()
 
-  // O mesmo aparelho continua de onde parou; um link de outro aplicador começa do zero.
-  const continua = estado?.sessao && (!codigoDoLink || estado.codigo === codigoDoLink)
+  // O mesmo aparelho continua de onde parou; um link de outro aplicador (ou uma captura que
+  // estava ligada) começa do zero.
+  const continua = estado?.sessao && estado.modo !== 'captura' && (!codigoDoLink || estado.codigo === codigoDoLink)
   const etapa = continua ? estado.etapa : 'consentimento'
 
   // Cada etapa desta tela conta como uma tela nos eventos.

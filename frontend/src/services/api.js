@@ -95,14 +95,14 @@ function lerJson(texto) {
 }
 
 // Avisa quem estiver escutando (o modo validação). O id vem de uma cópia da resposta, para a
-// tela ainda poder ler a original. status 0 = sem conexão.
+// tela ainda poder ler a original; no login, é o id do usuário que entrou. status 0 = sem conexão.
 async function avisarChamada(caminho, metodo, resposta) {
   let id = null
   if (resposta?.ok && resposta.status !== 204) {
     id = await resposta
       .clone()
       .json()
-      .then((corpo) => corpo?.id ?? null)
+      .then((corpo) => corpo?.id ?? corpo?.usuario?.id ?? null)
       .catch(() => null)
   }
   const detalhe = { metodo: metodo ?? 'GET', caminho, status: resposta?.status ?? 0, id }

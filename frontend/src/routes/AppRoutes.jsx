@@ -25,6 +25,7 @@ import AgendaPage from '../pages/Agenda/AgendaPage'
 import MaisPage from '../pages/Mais/MaisPage'
 import NaoEncontradaPage from '../pages/NaoEncontrada/NaoEncontradaPage'
 import ValidacaoPage from '../pages/Validacao/ValidacaoPage'
+import CapturaPage from '../pages/Validacao/CapturaPage'
 import GerarLinkPage from '../pages/Validacao/GerarLinkPage'
 import { registrar } from '../utils/registrador'
 
@@ -36,6 +37,7 @@ export function RotasApp() {
       <Route path="/login" element={<LoginPage />} />
       {/* Modo validação: o participante entra pelo link, sem login. */}
       <Route path="/validacao" element={<ValidacaoPage />} />
+      <Route path="/validacao/captura" element={<CapturaPage />} />
 
       {/* Dentro do layout: menu lateral (PC) e abas (celular). Só com login. */}
       <Route

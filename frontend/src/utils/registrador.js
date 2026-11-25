@@ -16,7 +16,7 @@
 import { TAREFAS } from '../constants/validacao'
 import { EVENTO_CHAMADA_API } from '../services/api'
 import { enviarEventos } from '../services/validacaoService'
-import { emValidacao, lerEstado, salvarEstado, tarefaAtual } from './modoValidacao'
+import { capturando, lerEstado, salvarEstado, tarefaAtual } from './modoValidacao'
 
 const SEGUNDOS_ENTRE_ENVIOS = 5
 const TAMANHO_DO_LOTE = 200
@@ -33,7 +33,7 @@ const encurtar = (texto, tamanho = 80) => (texto ?? '').replace(/\s+/g, ' ').tri
 
 export function registrar(evento) {
   const estado = lerEstado()
-  if (!emValidacao(estado)) return
+  if (!capturando(estado)) return
   fila.push({
     tarefa: tarefaAtual(estado),
     tela: window.location.pathname,

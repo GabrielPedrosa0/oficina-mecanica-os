@@ -1,10 +1,17 @@
 // Onde o participante está no teste, guardado no aparelho (localStorage). Assim, se ele
 // fechar e abrir o link de novo, continua de onde parou.
 //
-// Estado: { codigo, sessao, origem, placa, etapa, tarefa }
-//   etapa: 'perfil' | 'como_funciona' | 'cenario' | 'tarefa' | 'concluida' | 'feedback' | 'fim'
+// Dois modos:
+//   CAPTURA  só o registrador (toques, erros, pausas, chamadas à API) numa sessão própria.
+//            O app funciona normal, com login. Entrada: /validacao/captura?a=CODIGO
+//   TRILHA   o nosso instrumento: as 4 tarefas, a barra de progresso, o perfil e o SUS,
+//            sem login. Usa a captura por baixo. Entrada: /validacao?a=CODIGO
+//
+// Estado: { modo, codigo, sessao, origem, placa, etapa, tarefa }
+//   modo: 'trilha' | 'captura'
+//   etapa (trilha): 'perfil' | 'como_funciona' | 'cenario' | 'tarefa' | 'concluida' | 'feedback' | 'fim'
 //   tarefa: 1 a 4 (nas etapas cenario, tarefa e concluida)
-// Sem estado (ou com etapa 'fim') o app funciona normalmente, com login.
+// Sem estado (ou com etapa 'fim') o app funciona normalmente, sem registrar nada.
 import { useEffect, useState } from 'react'
 
 const CHAVE = 'oficina_validacao'
@@ -39,9 +46,14 @@ export function apagarEstado() {
   window.dispatchEvent(new Event(EVENTO_MUDOU))
 }
 
-// Modo validação ligado: o app deixa entrar sem login e mostra a barra de progresso.
-export function emValidacao(estado = lerEstado()) {
+// Registrador ligado (nos dois modos).
+export function capturando(estado = lerEstado()) {
   return Boolean(estado?.sessao) && estado.etapa !== 'fim'
+}
+
+// Trilha ligada: o app deixa entrar sem login e mostra a barra de progresso.
+export function emTrilha(estado = lerEstado()) {
+  return capturando(estado) && estado.modo !== 'captura'
 }
 
 // A tarefa que está sendo feita agora (0 fora das tarefas).
