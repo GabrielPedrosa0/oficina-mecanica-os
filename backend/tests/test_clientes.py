@@ -41,23 +41,99 @@ def test_cadastrar_com_endereco(client):
 
 
 # CPF/CNPJ e campos do endereço são opcionais: ausente, vazio ou só espaços
-# vira None (partição válida sem valor); com texto, é gravado sem os espaços
-# em volta (limite: 1 caractere).
+# vira None (partição válida sem valor).
 CAMPOS_OPCIONAIS = ["cpf_cnpj", "cep", "logradouro", "numero", "complemento", "bairro", "cidade", "uf"]
 
 
-@pytest.mark.parametrize("valor, esperado", [
-    (None, None),
-    ("", None),
-    ("   ", None),
-    ("A", "A"),
-    (" A ", "A"),
-], ids=["ausente", "vazio", "so-espacos", "um-caractere", "um-caractere-com-espacos"])
-def test_campos_opcionais(client, valor, esperado):
+@pytest.mark.parametrize("valor", [None, "", "   "], ids=["ausente", "vazio", "so-espacos"])
+def test_campos_opcionais(client, valor):
     corpo = {"nome": "Ana", "telefone": "85900000001", **{campo: valor for campo in CAMPOS_OPCIONAIS}}
     r = client.post("/api/clientes", json=corpo)
     assert r.status_code == 201
-    assert all(r.json()[campo] == esperado for campo in CAMPOS_OPCIONAIS)
+    assert all(r.json()[campo] is None for campo in CAMPOS_OPCIONAIS)
+
+
+# Campos de texto livre do endereço: gravados sem os espaços em volta
+# (limite: 1 caractere).
+CAMPOS_TEXTO = ["logradouro", "numero", "complemento", "bairro", "cidade"]
+
+
+@pytest.mark.parametrize("valor", ["A", " A "], ids=["um-caractere", "um-caractere-com-espacos"])
+def test_campos_texto(client, valor):
+    corpo = {"nome": "Ana", "telefone": "85900000001", **{campo: valor for campo in CAMPOS_TEXTO}}
+    r = client.post("/api/clientes", json=corpo)
+    assert r.status_code == 201
+    assert all(r.json()[campo] == "A" for campo in CAMPOS_TEXTO)
+
+
+# CPF/CNPJ válido: 11 dígitos (CPF) ou 14 (CNPJ), com ou sem pontuação.
+# Sempre é gravado só com os dígitos.
+@pytest.mark.parametrize("cpf_cnpj, esperado", [
+    ("12345678901", "12345678901"),
+    ("123.456.789-01", "12345678901"),
+    ("12345678000190", "12345678000190"),
+    ("12.345.678/0001-90", "12345678000190"),
+], ids=["cpf-11-digitos", "cpf-com-pontuacao", "cnpj-14-digitos", "cnpj-com-pontuacao"])
+def test_cpf_cnpj_valido(client, cpf_cnpj, esperado):
+    r = client.post("/api/clientes", json={"nome": "Ana", "telefone": "85900000001", "cpf_cnpj": cpf_cnpj})
+    assert r.status_code == 201
+    assert r.json()["cpf_cnpj"] == esperado
+
+
+# CPF/CNPJ inválido: nas beiradas do CPF (10 e 12 dígitos), do CNPJ
+# (13 e 15 dígitos) ou sem nenhum dígito.
+@pytest.mark.parametrize("cpf_cnpj", [
+    "1234567890",
+    "123456789012",
+    "1234567890123",
+    "123456789012345",
+    "abc",
+], ids=["10-digitos", "12-digitos", "13-digitos", "15-digitos", "sem-digitos"])
+def test_cpf_cnpj_invalido(client, cpf_cnpj):
+    r = client.post("/api/clientes", json={"nome": "Ana", "telefone": "85900000001", "cpf_cnpj": cpf_cnpj})
+    assert r.status_code == 422
+    assert r.json()["detail"] == "CPF/CNPJ inválido. Use 11 dígitos (CPF) ou 14 (CNPJ)."
+
+
+# CPF/CNPJ repetido: outro cliente não pode usar o mesmo, nem com pontuação (409).
+@pytest.mark.parametrize("cpf_cnpj", ["12345678901", "123.456.789-01"], ids=["igual", "com-pontuacao"])
+def test_cpf_cnpj_repetido(client, cpf_cnpj):
+    client.post("/api/clientes", json={"nome": "Ana", "telefone": "85900000001", "cpf_cnpj": "12345678901"})
+    r = client.post("/api/clientes", json={"nome": "Outra", "telefone": "85900000002", "cpf_cnpj": cpf_cnpj})
+    assert r.status_code == 409
+    assert r.json()["detail"] == "Já existe um cliente com esse CPF/CNPJ."
+
+
+# CEP válido: 8 dígitos, com ou sem hífen; é gravado só com os dígitos.
+@pytest.mark.parametrize("cep", ["60000000", "60000-000"], ids=["8-digitos", "com-hifen"])
+def test_cep_valido(client, cep):
+    r = client.post("/api/clientes", json={"nome": "Ana", "telefone": "85900000001", "cep": cep})
+    assert r.status_code == 201
+    assert r.json()["cep"] == "60000000"
+
+
+# CEP inválido: 7 ou 9 dígitos (limites em volta de 8) ou sem nenhum dígito.
+@pytest.mark.parametrize("cep", ["6000000", "600000000", "abc"], ids=["7-digitos", "9-digitos", "sem-digitos"])
+def test_cep_invalido(client, cep):
+    r = client.post("/api/clientes", json={"nome": "Ana", "telefone": "85900000001", "cep": cep})
+    assert r.status_code == 422
+    assert r.json()["detail"] == "CEP inválido. Use 8 dígitos, ex.: 60000-000."
+
+
+# UF válida: 2 letras; minúsculas e espaços em volta são aceitos e gravados como "CE".
+@pytest.mark.parametrize("uf", ["CE", "ce", " Ce "], ids=["maiusculas", "minusculas", "com-espacos"])
+def test_uf_valida(client, uf):
+    r = client.post("/api/clientes", json={"nome": "Ana", "telefone": "85900000001", "uf": uf})
+    assert r.status_code == 201
+    assert r.json()["uf"] == "CE"
+
+
+# UF inválida: 1 ou 3 letras (limites em volta de 2) ou com número.
+@pytest.mark.parametrize("uf", ["C", "CEA", "C1"], ids=["1-letra", "3-letras", "com-numero"])
+def test_uf_invalida(client, uf):
+    r = client.post("/api/clientes", json={"nome": "Ana", "telefone": "85900000001", "uf": uf})
+    assert r.status_code == 422
+    assert r.json()["detail"] == "UF inválida. Use a sigla com 2 letras, ex.: CE."
 
 
 # Nome: partição válida (texto com 1 ou mais letras, limite = 1 caractere)
@@ -220,6 +296,15 @@ def test_atualizar_endereco(client, cliente):
     salvo = client.get(f"/api/clientes/{cliente['id']}").json()
     assert salvo["cep"] == "60110000"
     assert salvo["complemento"] is None
+
+
+# Atualizar mantendo o próprio CPF/CNPJ não conta como repetido.
+def test_atualizar_mesmo_cpf_cnpj(client, cliente):
+    corpo = {"nome": "Marina Souza", "telefone": "85900000001", "cpf_cnpj": "12345678901"}
+    client.put(f"/api/clientes/{cliente['id']}", json=corpo)
+    r = client.put(f"/api/clientes/{cliente['id']}", json={**corpo, "cpf_cnpj": "123.456.789-01"})
+    assert r.status_code == 200
+    assert r.json()["cpf_cnpj"] == "12345678901"
 
 
 # Atualizar com o e-mail de outro cliente: 409, e nada muda.

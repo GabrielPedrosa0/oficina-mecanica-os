@@ -13,9 +13,10 @@ EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 # Confere os campos e devolve os dados prontos para gravar: telefone no formato
-# (85) 90000-0001 e e-mail em minúsculas. CPF/CNPJ e endereço são opcionais e
-# gravados como vieram (vazio vira None). Na atualização, o id do próprio cliente
-# é ignorado na checagem de e-mail repetido.
+# (85) 90000-0001, e-mail em minúsculas, CPF/CNPJ e CEP só com dígitos e UF em
+# maiúsculas (as mesmas regras da tabela cliente do banco). CPF/CNPJ e endereço são
+# opcionais (vazio vira None). Na atualização, o id do próprio cliente é ignorado
+# na checagem de e-mail e CPF/CNPJ repetidos.
 def validar_cliente(entrada: Cliente, id: int | None = None):
     nome = entrada.nome.strip()
     if nome == "":
@@ -36,11 +37,35 @@ def validar_cliente(entrada: Cliente, id: int | None = None):
         if repetido is not None and repetido["id"] != id:
             raise HTTPException(status_code=409, detail="Já existe um cliente com esse e-mail.")
 
-    return {"nome": nome, "cpf_cnpj": limpar(entrada.cpf_cnpj), "telefone": telefone, "email": email,
+    # CPF (11 dígitos) ou CNPJ (14); aceita "123.456.789-01" e grava "12345678901".
+    cpf_cnpj = limpar(entrada.cpf_cnpj)
+    if cpf_cnpj is not None:
+        cpf_cnpj = re.sub(r"\D", "", cpf_cnpj)
+        if len(cpf_cnpj) not in (11, 14):
+            raise HTTPException(status_code=422, detail="CPF/CNPJ inválido. Use 11 dígitos (CPF) ou 14 (CNPJ).")
+        repetido = cliente_repository.buscar_por_cpf_cnpj(cpf_cnpj)
+        if repetido is not None and repetido["id"] != id:
+            raise HTTPException(status_code=409, detail="Já existe um cliente com esse CPF/CNPJ.")
+
+    # CEP com 8 dígitos; aceita "60000-000" e grava "60000000".
+    cep = limpar(entrada.cep)
+    if cep is not None:
+        cep = re.sub(r"\D", "", cep)
+        if len(cep) != 8:
+            raise HTTPException(status_code=422, detail="CEP inválido. Use 8 dígitos, ex.: 60000-000.")
+
+    # UF é a sigla do estado com 2 letras; aceita "ce" e grava "CE".
+    uf = limpar(entrada.uf)
+    if uf is not None:
+        uf = uf.upper()
+        if not re.fullmatch(r"[A-Z]{2}", uf):
+            raise HTTPException(status_code=422, detail="UF inválida. Use a sigla com 2 letras, ex.: CE.")
+
+    return {"nome": nome, "cpf_cnpj": cpf_cnpj, "telefone": telefone, "email": email,
             "cliente_desde": entrada.cliente_desde or date.today(),
-            "cep": limpar(entrada.cep), "logradouro": limpar(entrada.logradouro),
+            "cep": cep, "logradouro": limpar(entrada.logradouro),
             "numero": limpar(entrada.numero), "complemento": limpar(entrada.complemento),
-            "bairro": limpar(entrada.bairro), "cidade": limpar(entrada.cidade), "uf": limpar(entrada.uf)}
+            "bairro": limpar(entrada.bairro), "cidade": limpar(entrada.cidade), "uf": uf}
 
 
 # Devolve o cliente, ou responde 404 se não existe nenhum com esse id.
