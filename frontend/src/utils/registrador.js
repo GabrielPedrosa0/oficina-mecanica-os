@@ -103,6 +103,18 @@ function aoMudarTela(mudancas) {
   }
 }
 
+// Quem tenta salvar de novo sem corrigir não faz aparecer erro novo: a mensagem já estava na
+// tela. Logo depois de cada envio de formulário, anota também os erros que continuaram lá.
+function aoEnviarFormulario() {
+  const antes = new Map([...document.querySelectorAll(ERROS)].map((erro) => [erro, erro.textContent]))
+  setTimeout(() => {
+    for (const erro of document.querySelectorAll(ERROS)) {
+      const texto = encurtar(erro.textContent, 200)
+      if (texto && antes.get(erro) === erro.textContent) registrar({ tipo: 'ERRO_FORMULARIO', texto })
+    }
+  }, 0)
+}
+
 function aoTrocarVisibilidade() {
   if (document.visibilityState === 'hidden') {
     registrar({ tipo: 'SAIU' })
@@ -139,6 +151,7 @@ export function instalarRegistrador() {
   instalado = true
   document.addEventListener('click', aoClicar, true)
   document.addEventListener('pointerdown', aoTocar, true)
+  document.addEventListener('submit', aoEnviarFormulario, true)
   document.addEventListener('visibilitychange', aoTrocarVisibilidade)
   window.addEventListener(EVENTO_CHAMADA_API, aoChamarApi)
   new MutationObserver(aoMudarTela).observe(document.body, { childList: true, subtree: true, characterData: true })
