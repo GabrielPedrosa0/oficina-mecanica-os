@@ -25,6 +25,10 @@ def buscar_por_email(email: str):
     return tabela.buscar_por("email = %s", (email,))
 
 
+def buscar_por_cpf_cnpj(cpf_cnpj: str):
+    return tabela.buscar_por("cpf_cnpj = %s", (cpf_cnpj,))
+
+
 def criar(dados: dict):
     return tabela.criar(dados)
 
