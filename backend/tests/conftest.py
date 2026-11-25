@@ -1,5 +1,5 @@
-# Fixtures dos testes de ordens de serviço, apontamentos, clientes, mecânicos, busca, exportação
-# e autenticação.
+# Fixtures dos testes de ordens de serviço, apontamentos, clientes, mecânicos, busca, exportação,
+# autenticação e validação.
 #
 # Os testes usam um PostgreSQL só deles, o do TEST_DATABASE_URL (no ambiente ou no backend/.env).
 # No começo, as tabelas desse banco são APAGADAS e criadas de novo a partir de
@@ -21,11 +21,11 @@ from database import connection, erros, migrar
 from database.criar_tabelas import MODELO, rodar_arquivo
 from repositories import (
     acao_os_repository, apontamento_repository, cliente_repository, item_os_repository, item_repository,
-    mecanico_repository, ordem_servico_repository, veiculo_repository,
+    mecanico_repository, ordem_servico_repository, validacao_repository, veiculo_repository,
 )
 from routers import (
     acoes_os, agenda, apontamentos, autenticacao, busca, clientes, exportacao, itens, itens_os, mecanicos,
-    ordens_servico, pecas, servicos, usuarios, veiculos,
+    ordens_servico, pecas, servicos, usuarios, validacao, veiculos,
 )
 from services import auth_service
 
@@ -52,6 +52,7 @@ def limpar_dados(banco_de_teste):
     for repositorio in (acao_os_repository, apontamento_repository, cliente_repository, item_os_repository,
                         item_repository, mecanico_repository, ordem_servico_repository, veiculo_repository):
         repositorio.reiniciar()
+    validacao_repository.reiniciar()
     auth_service.tabela.esvaziar()
     auth_service.tokens_recuperacao.clear()
     auth_service.criar_usuario("Usuário", "teste@oficina.com.br", "senha-de-teste")
@@ -63,7 +64,7 @@ def client():
     erros.registrar(app)
     for router in (ordens_servico.router, itens_os.router, acoes_os.router, apontamentos.router, clientes.router,
                    busca.router, autenticacao.router, exportacao.router, mecanicos.router, itens.router,
-                   agenda.router, servicos.router, pecas.router, usuarios.router, veiculos.router):
+                   agenda.router, servicos.router, pecas.router, usuarios.router, validacao.router, veiculos.router):
         app.include_router(router)
     return TestClient(app)
 
