@@ -5,7 +5,7 @@
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useApi } from '../../hooks/useApi'
 import { consultarUsuarioLogado, sair, usuarioSalvo } from '../../services/authService'
-import { emValidacao, useModoValidacao } from '../../utils/modoValidacao'
+import { emTrilha, useModoValidacao } from '../../utils/modoValidacao'
 import BarraProgresso from '../validacao/BarraProgresso'
 import TarefaConcluida from '../validacao/TarefaConcluida'
 import BarraAbas from './BarraAbas'
@@ -16,7 +16,7 @@ import './layout.css'
 export default function LayoutPrincipal({ children }) {
   const navigate = useNavigate()
   const validacao = useModoValidacao()
-  const testando = emValidacao(validacao)
+  const testando = emTrilha(validacao)
   // Confere o token ao abrir (um 401 leva ao login) e atualiza nome e perfil.
   // No modo validação não há login, então não confere.
   const { dados } = useApi(consultarUsuarioLogado, [], { ativo: !testando })

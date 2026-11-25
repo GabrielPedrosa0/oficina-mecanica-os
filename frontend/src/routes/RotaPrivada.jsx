@@ -10,7 +10,7 @@ import Botao from '../components/ui/Botao'
 import { EstadoVazio } from '../components/ui/Estados'
 import { EVENTO_SESSAO_EXPIRADA } from '../services/api'
 import { estaLogado, perfilDe, usuarioSalvo } from '../services/authService'
-import { emValidacao } from '../utils/modoValidacao'
+import { emTrilha } from '../utils/modoValidacao'
 
 export default function RotaPrivada({ children }) {
   const location = useLocation()
@@ -26,7 +26,7 @@ export default function RotaPrivada({ children }) {
     return () => window.removeEventListener(EVENTO_SESSAO_EXPIRADA, expirou)
   }, [navigate, location])
 
-  if (!estaLogado() && !emValidacao()) return <Navigate to="/login" replace state={{ de: location }} />
+  if (!estaLogado() && !emTrilha()) return <Navigate to="/login" replace state={{ de: location }} />
   return children ?? <Outlet />
 }
 

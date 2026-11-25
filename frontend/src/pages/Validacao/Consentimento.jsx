@@ -20,7 +20,15 @@ export default function Consentimento({ codigo, origem }) {
       navegador: navigator.userAgent,
     })
     if (!sessao) return
-    salvarEstado({ codigo, origem, sessao: sessao.id, placa: placaDaSessao(sessao.id), etapa: 'perfil', tarefa: 0 })
+    salvarEstado({
+      modo: 'trilha',
+      codigo,
+      origem,
+      sessao: sessao.id,
+      placa: placaDaSessao(sessao.id),
+      etapa: 'perfil',
+      tarefa: 0,
+    })
     instalarRegistrador()
   }
 

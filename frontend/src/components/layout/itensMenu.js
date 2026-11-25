@@ -14,7 +14,7 @@ import {
   Users,
   Wrench,
 } from 'lucide-react'
-import { emValidacao } from '../../utils/modoValidacao'
+import { emTrilha } from '../../utils/modoValidacao'
 
 export const ITENS_MENU = [
   { para: '/', rotulo: 'Painel', icone: LayoutDashboard },
@@ -65,7 +65,7 @@ export const ABAS_CELULAR = [
 
 // Filtra os itens pelo perfil do usuário. Sem usuário (ainda sem login), mostra tudo.
 export function itensDoPerfil(itens, perfil) {
-  const visiveis = emValidacao() ? itens.filter((item) => !item.foraDaValidacao) : itens
+  const visiveis = emTrilha() ? itens.filter((item) => !item.foraDaValidacao) : itens
   if (!perfil) return visiveis
   const chave = String(perfil).toUpperCase()
   return visiveis.filter((item) => !item.perfis || item.perfis.includes(chave))
