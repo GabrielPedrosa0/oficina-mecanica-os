@@ -13,6 +13,7 @@ venv/
 # Banco local e segredos
 *.db
 .env
+.env.local
 
 # Editores e sistema
 .vscode/*

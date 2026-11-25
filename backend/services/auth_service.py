@@ -1,6 +1,15 @@
-# Autenticação (opcional). A senha é guardada com hash (PBKDF2) e o acesso é por token
-# "Bearer". Nenhuma outra rota exige login por enquanto; para exigir, use
+# Autenticação. Os usuários ficam na tabela usuario do banco, com a senha guardada só como
+# hash (PBKDF2). O acesso é por token "Bearer" assinado: o token carrega o id do usuário e a
+# validade, e a assinatura (HMAC) impede que alguém o altere. Assim o token vale em qualquer
+# instância do servidor (na Vercel cada requisição pode cair numa diferente) sem precisar
+# de uma tabela de sessões.
+#
+# A assinatura usa a variável de ambiente CHAVE_SECRETA (defina uma na Vercel). Sem ela,
+# a chave é derivada do DATABASE_URL, que também é secreto e igual em todas as instâncias.
+#
+# Nenhuma outra rota exige login por enquanto; para exigir, use
 # `Depends(auth_service.usuario_atual)` na rota.
+import base64
 import hashlib
 import hmac
 import os
@@ -11,37 +20,97 @@ from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from database import connection
+from database.tabela import Tabela
 from schemas.auth_schema import EsqueciSenha, Login
 
 HORAS_DA_SESSAO = 8
 MINUTOS_DA_RECUPERACAO = 30
+ITERACOES = 200_000
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 bearer = HTTPBearer(auto_error=False)
 
-usuarios = {}
-sessoes = {}               # token de acesso -> {"usuario_id", "expira_em"}
-tokens_recuperacao = {}    # token de recuperação de senha -> {"usuario_id", "expira_em"}
-proximo_usuario_id = 1
+tabela = Tabela("usuario", "id_usuario", {"nome": "nome", "email": "email", "senha_hash": "senha_hash",
+                                           "perfil": "perfil"})
+
+# Token de recuperação de senha -> {"usuario_id", "expira_em"}. O envio do e-mail ainda não
+# existe, então eles ficam só na memória e nunca vão na resposta.
+tokens_recuperacao = {}
 
 # Usado quando o e-mail não existe, para o login levar o mesmo tempo nos dois casos.
-SAL_FALSO = secrets.token_bytes(16)
+HASH_FALSO = None
 
 
-def hash_senha(senha: str, sal: bytes):
-    return hashlib.pbkdf2_hmac("sha256", senha.encode(), sal, 200_000).hex()
+# Os testes trocam esta função para simular o tempo passando.
+def agora():
+    return datetime.now()
 
 
-def criar_usuario(nome: str, email: str, senha: str, perfil: str = "Recepção"):
-    global proximo_usuario_id
-    sal = secrets.token_bytes(16)
-    usuarios[proximo_usuario_id] = {"id": proximo_usuario_id, "nome": nome, "email": email.lower(),
-                                    "perfil": perfil, "sal": sal, "senha_hash": hash_senha(senha, sal)}
-    proximo_usuario_id += 1
+def chave_secreta():
+    chave = os.environ.get("CHAVE_SECRETA")
+    if chave:
+        return chave.encode()
+    return hashlib.sha256(b"oficina-token:" + connection.url_do_banco().encode()).digest()
+
+
+# Guarda "pbkdf2_sha256$iteracoes$sal$hash" (cabe na coluna senha_hash).
+def hash_senha(senha: str, sal: bytes | None = None):
+    sal = sal or secrets.token_bytes(16)
+    calculado = hashlib.pbkdf2_hmac("sha256", senha.encode(), sal, ITERACOES).hex()
+    return f"pbkdf2_sha256${ITERACOES}${sal.hex()}${calculado}"
+
+
+def senha_confere(senha: str, guardado: str):
+    _, iteracoes, sal, esperado = guardado.split("$")
+    calculado = hashlib.pbkdf2_hmac("sha256", senha.encode(), bytes.fromhex(sal), int(iteracoes)).hex()
+    return hmac.compare_digest(calculado, esperado)
+
+
+def criar_usuario(nome: str, email: str, senha: str, perfil: str = "RECEPCAO"):
+    return tabela.criar({"nome": nome, "email": email.strip().lower(), "senha_hash": hash_senha(senha),
+                         "perfil": perfil})
+
+
+def buscar_por_email(email: str):
+    return tabela.buscar_por("email = %s", (email.strip().lower(),))
 
 
 # Os dados do usuário que podem sair na resposta (nunca o hash).
 def usuario_publico(usuario):
     return {"id": usuario["id"], "nome": usuario["nome"], "email": usuario["email"], "perfil": usuario["perfil"]}
+
+
+# --- Token assinado: base64("id.validade") + "." + assinatura ---
+def _b64(dados: bytes):
+    return base64.urlsafe_b64encode(dados).rstrip(b"=").decode()
+
+
+def _de_b64(texto: str):
+    return base64.urlsafe_b64decode(texto + "=" * (-len(texto) % 4))
+
+
+def _assinar(conteudo: str):
+    return _b64(hmac.new(chave_secreta(), conteudo.encode(), hashlib.sha256).digest())
+
+
+def gerar_token(usuario_id: int):
+    validade = int((agora() + timedelta(hours=HORAS_DA_SESSAO)).timestamp())
+    conteudo = _b64(f"{usuario_id}.{validade}".encode())
+    return f"{conteudo}.{_assinar(conteudo)}"
+
+
+# O id do usuário do token, ou None se o token é inválido, foi alterado ou expirou.
+def ler_token(token: str):
+    try:
+        conteudo, assinatura = token.split(".")
+        if not hmac.compare_digest(assinatura, _assinar(conteudo)):
+            return None
+        usuario_id, validade = _de_b64(conteudo).decode().split(".")
+        if int(validade) < agora().timestamp():
+            return None
+        return int(usuario_id)
+    except (ValueError, UnicodeDecodeError):
+        return None
 
 
 # O usuário do token enviado em "Authorization: Bearer <token>", ou 401.
@@ -50,44 +119,43 @@ def usuario_atual(credenciais: HTTPAuthorizationCredentials | None = Depends(bea
                            headers={"WWW-Authenticate": "Bearer"})
     if credenciais is None:
         raise negado
-    sessao = sessoes.get(credenciais.credentials)
-    if sessao is None or sessao["expira_em"] < datetime.now() or sessao["usuario_id"] not in usuarios:
-        sessoes.pop(credenciais.credentials, None)
+    usuario_id = ler_token(credenciais.credentials)
+    usuario = tabela.buscar(usuario_id) if usuario_id is not None else None
+    if usuario is None:
         raise negado
-    return usuarios[sessao["usuario_id"]]
+    return usuario
 
 
 def entrar(entrada: Login):
-    usuario = next((u for u in usuarios.values() if u["email"] == entrada.email.strip().lower()), None)
-    hash_calculado = hash_senha(entrada.senha, usuario["sal"] if usuario else SAL_FALSO)
+    global HASH_FALSO
+    garantir_usuario_inicial()
+    usuario = buscar_por_email(entrada.email)
+    if HASH_FALSO is None:
+        HASH_FALSO = hash_senha(secrets.token_hex(8))
+    confere = senha_confere(entrada.senha, usuario["senha_hash"] if usuario else HASH_FALSO)
     # A mesma mensagem para e-mail desconhecido e senha errada, para não revelar quem tem conta.
-    if usuario is None or not hmac.compare_digest(hash_calculado, usuario["senha_hash"]):
+    if usuario is None or not confere:
         raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
-
-    token = secrets.token_urlsafe(32)
-    sessoes[token] = {"usuario_id": usuario["id"], "expira_em": datetime.now() + timedelta(hours=HORAS_DA_SESSAO)}
-    return {"access_token": token, "token_type": "bearer", "usuario": usuario_publico(usuario)}
+    return {"access_token": gerar_token(usuario["id"]), "token_type": "bearer", "usuario": usuario_publico(usuario)}
 
 
-# Responde igual exista o e-mail ou não. O envio do e-mail com o link ainda não existe:
-# o token de recuperação fica só na memória e nunca vai na resposta.
+# Responde igual exista o e-mail ou não.
 def esqueci_senha(entrada: EsqueciSenha):
     email = entrada.email.strip().lower()
     if not EMAIL.match(email):
         raise HTTPException(status_code=422, detail="E-mail inválido.")
-    usuario = next((u for u in usuarios.values() if u["email"] == email), None)
+    usuario = buscar_por_email(email)
     if usuario is not None:
         tokens_recuperacao[secrets.token_urlsafe(32)] = {
             "usuario_id": usuario["id"],
-            "expira_em": datetime.now() + timedelta(minutes=MINUTOS_DA_RECUPERACAO)}
+            "expira_em": agora() + timedelta(minutes=MINUTOS_DA_RECUPERACAO)}
     return {"mensagem": "Se o e-mail estiver cadastrado, enviaremos as instruções para recuperar a senha."}
 
 
-# Usuário de desenvolvimento: o e-mail e a senha vêm de ADMIN_EMAIL e ADMIN_SENHA.
-# Sem elas, usa-se o par abaixo. Troque antes de publicar.
-def criar_usuario_inicial():
-    criar_usuario("Usuário", os.environ.get("ADMIN_EMAIL", "recepcao@oficina.com.br"),
-                  os.environ.get("ADMIN_SENHA", "oficina123"))
-
-
-criar_usuario_inicial()
+# Com a tabela usuario vazia (banco novo), cria o primeiro usuário: e-mail e senha vêm de
+# ADMIN_EMAIL e ADMIN_SENHA. Sem elas, usa-se o par abaixo. Troque antes de publicar.
+def garantir_usuario_inicial():
+    if connection.consultar_um("SELECT 1 FROM usuario LIMIT 1") is None:
+        criar_usuario(os.environ.get("ADMIN_NOME", "Administrador"),
+                      os.environ.get("ADMIN_EMAIL", "recepcao@oficina.com.br"),
+                      os.environ.get("ADMIN_SENHA", "oficina123"), perfil="ADMIN")

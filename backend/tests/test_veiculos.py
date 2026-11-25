@@ -136,7 +136,7 @@ def test_placa_repetida(api, corpo):
 # Listar e filtrar por placa.
 def test_listar(api, corpo):
     api.post("/api/veiculos", json=corpo)
-    api.post("/api/veiculos", json={**corpo, "placa": "ABC1234"})
+    api.post("/api/veiculos", json={**corpo, "placa": "ABC1234", "chassi": None})
     assert len(api.get("/api/veiculos").json()) == 2
     assert [v["placa"] for v in api.get("/api/veiculos?placa=QRS").json()] == ["QRS4F21"]
 
@@ -149,7 +149,7 @@ def test_consultar_inexistente(api):
 # Atualizar pode manter a própria placa, mas não usar a de outro.
 def test_atualizar(api, corpo):
     id = api.post("/api/veiculos", json=corpo).json()["id"]
-    api.post("/api/veiculos", json={**corpo, "placa": "ABC1234"})
+    api.post("/api/veiculos", json={**corpo, "placa": "ABC1234", "chassi": None})
     r = api.put(f"/api/veiculos/{id}", json={**corpo, "modelo": "Gol 1.0"})
     assert r.status_code == 200
     assert r.json()["modelo"] == "Gol 1.0"
@@ -183,3 +183,11 @@ def test_atualizar_invalido(api, corpo):
 # Excluir veículo inexistente dá 404.
 def test_excluir_inexistente(api):
     assert api.delete("/api/veiculos/99").status_code == 404
+
+
+# Chassi também não se repete (UNIQUE no banco): 409 com mensagem clara.
+def test_chassi_repetido(api, corpo):
+    api.post("/api/veiculos", json=corpo)
+    r = api.post("/api/veiculos", json={**corpo, "placa": "ABC1234"})
+    assert r.status_code == 409
+    assert r.json()["detail"] == "Já existe um veículo com esse chassi."

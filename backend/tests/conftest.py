@@ -1,12 +1,23 @@
 # Fixtures dos testes de ordens de serviço, apontamentos, clientes, mecânicos, busca, exportação
 # e autenticação.
+#
+# Os testes usam um PostgreSQL só deles, o do TEST_DATABASE_URL (no ambiente ou no backend/.env).
+# No começo, as tabelas desse banco são APAGADAS e criadas de novo a partir de
+# banco/modelo_logico_oficina.sql; antes de cada teste, elas são esvaziadas.
+# Por isso ele nunca pode ser o banco de verdade (DATABASE_URL). Sem TEST_DATABASE_URL, os
+# testes são pulados.
+#
 # O app de teste monta só os routers desses módulos, sem depender do main.py.
 # Os routers entram na ordem "ruim" de propósito (ordens antes da exportação): a rota
 # /api/ordens-servico/exportar precisa funcionar em qualquer ordem.
+import os
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from database import connection, erros
+from database.criar_tabelas import MODELO, rodar_arquivo
 from repositories import (
     acao_os_repository, apontamento_repository, cliente_repository, item_os_repository, item_repository,
     mecanico_repository, ordem_servico_repository, veiculo_repository,
@@ -16,22 +27,37 @@ from routers import (
 )
 from services import auth_service
 
+connection._carregar_env()
+URL_TESTE = os.environ.get("TEST_DATABASE_URL")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def banco_de_teste():
+    if not URL_TESTE:
+        pytest.skip("Defina TEST_DATABASE_URL (um banco só para testes) para rodar os testes.")
+    if URL_TESTE == os.environ.get("DATABASE_URL"):
+        pytest.exit("TEST_DATABASE_URL é igual ao DATABASE_URL: os testes apagariam o banco de verdade.")
+    connection.usar_url(URL_TESTE)
+    connection.executar("DROP SCHEMA public CASCADE")
+    connection.executar("CREATE SCHEMA public")
+    rodar_arquivo(MODELO)
+    yield
+
 
 @pytest.fixture(autouse=True)
-def limpar_dados():
+def limpar_dados(banco_de_teste):
     for repositorio in (acao_os_repository, apontamento_repository, cliente_repository, item_os_repository,
                         item_repository, mecanico_repository, ordem_servico_repository, veiculo_repository):
         repositorio.reiniciar()
-    auth_service.usuarios.clear()
-    auth_service.sessoes.clear()
+    auth_service.tabela.esvaziar()
     auth_service.tokens_recuperacao.clear()
-    auth_service.proximo_usuario_id = 1
     auth_service.criar_usuario("Usuário", "teste@oficina.com.br", "senha-de-teste")
 
 
 @pytest.fixture
 def client():
     app = FastAPI()
+    erros.registrar(app)
     for router in (ordens_servico.router, itens_os.router, acoes_os.router, apontamentos.router, clientes.router,
                    busca.router, autenticacao.router, exportacao.router, mecanicos.router, itens.router):
         app.include_router(router)
@@ -46,10 +72,20 @@ def cliente(client):
 
 # Os veículos entram direto no repositório: as rotas de veículos são do Integrante 1.
 def novo_veiculo(id, placa, marca, modelo, cliente_id, quilometragem=82300):
-    veiculo = {"id": id, "placa": placa, "marca": marca, "modelo": modelo, "ano": 2022,
-               "quilometragem": quilometragem, "cliente_id": cliente_id}
-    veiculo_repository.veiculos[id] = veiculo
-    return veiculo
+    return veiculo_repository.criar_com_id(id, {"placa": placa, "marca": marca, "modelo": modelo, "ano": 2022,
+                                                "quilometragem": quilometragem, "cliente_id": cliente_id})
+
+
+# O valor total da OS vem da soma dos itens (visão vw_os_total). Para um teste que só precisa
+# de um total, lança uma peça com esse valor (peça não muda a coluna "Serviço" da OS).
+def definir_valor_total(os_id, valor):
+    item_os_repository.criar({"os_id": os_id, "item_id": 1, "descricao": "Peça de teste",
+                              "quantidade": 1, "valor_unitario": valor})
+
+
+# Muda o status direto no banco, sem passar pelas regras de transição.
+def definir_status(os_id, status):
+    ordem_servico_repository.atualizar(os_id, {"status": status})
 
 
 @pytest.fixture

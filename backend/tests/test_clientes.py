@@ -215,7 +215,7 @@ def test_excluir_com_veiculo(client, cliente, veiculo):
     r = client.delete(f"/api/clientes/{cliente['id']}")
     assert r.status_code == 409
     assert r.json()["detail"] == "Não é possível excluir: o cliente possui veículos vinculados."
-    veiculo_repository.veiculos.clear()
+    veiculo_repository.excluir(veiculo["id"])
     assert client.delete(f"/api/clientes/{cliente['id']}").status_code == 204
 
 

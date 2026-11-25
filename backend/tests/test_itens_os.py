@@ -1,6 +1,6 @@
 import pytest
 
-from repositories import ordem_servico_repository
+from tests.conftest import definir_status
 
 # O item_id aponta para o catálogo: 1 = Peça e 2 = Serviço já vêm cadastrados.
 ITEM = {"item_id": 2, "descricao": "Troca de pastilhas de freio", "quantidade": 1, "valor_unitario": 150.0}
@@ -130,7 +130,7 @@ def test_excluir_item(client, os_):
 ])
 def test_os_fechada(client, os_, status, esperado):
     novo_item(client)
-    ordem_servico_repository.ordens[1]["status"] = status
+    definir_status(1, status)
     respostas = (novo_item(client),
                  client.put("/api/ordens-servico/1/itens/1", json={**ITEM, "valor_unitario": 200}),
                  client.delete("/api/ordens-servico/1/itens/1"))

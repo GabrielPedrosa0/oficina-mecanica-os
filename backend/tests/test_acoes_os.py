@@ -2,8 +2,8 @@ from datetime import datetime
 
 import pytest
 
-from repositories import ordem_servico_repository
 from services import dashboard_service
+from tests.conftest import definir_valor_total
 
 
 def nova_os(client, os_corpo, **mudanca):
@@ -106,8 +106,8 @@ def test_data_de_conclusao_nunca_fica_antes_da_abertura(client, os_corpo, monkey
 def test_os_entregue_entra_no_faturamento_do_painel(client, os_corpo, monkeypatch):
     monkeypatch.setattr(dashboard_service, "agora", lambda: datetime(2026, 11, 20, 10, 30, 0))
     nova_os(client, os_corpo, status="PRONTA")
-    # O valor total não vai no corpo da OS; aqui gravamos direto, como no teste do painel.
-    ordem_servico_repository.ordens[1]["valor_total"] = 340
+    # O valor total não vai no corpo da OS: vem dos itens (aqui, um item de R$ 340).
+    definir_valor_total(1, 340)
     assert dashboard_service.obter_resumo(True)["faturamento_mes"] == 0
     mudar(client, "ENTREGUE")
     assert dashboard_service.obter_resumo(True)["faturamento_mes"] == 340.0

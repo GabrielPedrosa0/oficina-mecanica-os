@@ -1,51 +1,49 @@
-# Mecânicos em memória (dicionário que liga o id ao mecânico). Somem quando o
-# servidor reinicia. O banco de dados vem depois.
-# A lista começa com 2 mecânicos de exemplo; reiniciar() volta para eles.
+# Mecânicos no banco (tabela mecanico).
 from datetime import time
 
-mecanicos = {}
-proximo_id = 1
+from database.tabela import Tabela
+
+tabela = Tabela("mecanico", "id_mecanico", {
+    "nome": "nome", "cpf": "cpf", "telefone": "telefone",
+    "hora_inicio_expediente": "hora_inicio_expediente", "hora_fim_expediente": "hora_fim_expediente",
+})
+
+# Os 2 mecânicos de exemplo (os mesmos de banco/dados_exemplo.sql).
+EXEMPLOS = [
+    {"nome": "Rafael Lima", "cpf": "12345678901", "telefone": "(85) 90000-0009",
+     "hora_inicio_expediente": time(8, 0), "hora_fim_expediente": time(17, 0)},
+    {"nome": "Joana Alves", "cpf": "10987654321", "telefone": "(85) 90000-0010",
+     "hora_inicio_expediente": time(9, 0), "hora_fim_expediente": time(18, 0)},
+]
 
 
+# Só para os testes: volta para os 2 exemplos (ids 1 e 2).
+# O TRUNCATE em cascata também esvazia as OS (que apontam para o mecânico).
 def reiniciar():
-    global proximo_id
-    mecanicos.clear()
-    mecanicos[1] = {"id": 1, "nome": "Rafael Lima", "cpf": "12345678901", "telefone": "(85) 90000-0009",
-                    "hora_inicio_expediente": time(8, 0), "hora_fim_expediente": time(17, 0)}
-    mecanicos[2] = {"id": 2, "nome": "Joana Alves", "cpf": "10987654321", "telefone": "(85) 90000-0010",
-                    "hora_inicio_expediente": time(9, 0), "hora_fim_expediente": time(18, 0)}
-    proximo_id = 3
+    tabela.esvaziar()
+    for exemplo in EXEMPLOS:
+        tabela.criar(exemplo)
 
 
 def listar():
-    return list(mecanicos.values())
+    return tabela.listar()
 
 
 def buscar(id: int):
-    return mecanicos.get(id)
+    return tabela.buscar(id)
 
 
 def buscar_por_cpf(cpf: str):
-    return next((m for m in mecanicos.values() if m["cpf"] == cpf), None)
+    return tabela.buscar_por("cpf = %s", (cpf,))
 
 
 def criar(dados: dict):
-    global proximo_id
-    mecanico = {"id": proximo_id, **dados}
-    mecanicos[proximo_id] = mecanico
-    proximo_id += 1
-    return mecanico
+    return tabela.criar(dados)
 
 
 def atualizar(id: int, dados: dict):
-    mecanico = {"id": id, **dados}
-    mecanicos[id] = mecanico
-    return mecanico
+    return tabela.atualizar(id, dados)
 
 
 def excluir(id: int):
-    del mecanicos[id]
-
-
-# Começa já com os 2 exemplos.
-reiniciar()
+    tabela.excluir(id)

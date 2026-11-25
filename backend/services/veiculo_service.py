@@ -40,19 +40,27 @@ def consultar_veiculo(id: int):
     return veiculo
 
 
+# Placa e chassi não se repetem (UNIQUE no banco). `id` é o do próprio veículo, na atualização.
+def conferir_repetidos(dados, id: int | None = None):
+    outro = veiculo_repository.buscar_por_placa(dados["placa"])
+    if outro is not None and outro["id"] != id:
+        raise HTTPException(status_code=409, detail="Já existe um veículo com essa placa.")
+    if dados.get("chassi"):
+        outro = veiculo_repository.buscar_por_chassi(dados["chassi"])
+        if outro is not None and outro["id"] != id:
+            raise HTTPException(status_code=409, detail="Já existe um veículo com esse chassi.")
+
+
 def cadastrar_veiculo(entrada: Veiculo):
     dados = validar(entrada)
-    if veiculo_repository.buscar_por_placa(dados["placa"]) is not None:
-        raise HTTPException(status_code=409, detail="Já existe um veículo com essa placa.")
+    conferir_repetidos(dados)
     return veiculo_repository.criar(dados)
 
 
 def atualizar_veiculo(id: int, entrada: Veiculo):
     consultar_veiculo(id)
     dados = validar(entrada)
-    outro = veiculo_repository.buscar_por_placa(dados["placa"])
-    if outro is not None and outro["id"] != id:
-        raise HTTPException(status_code=409, detail="Já existe um veículo com essa placa.")
+    conferir_repetidos(dados, id)
     return veiculo_repository.atualizar(id, dados)
 
 

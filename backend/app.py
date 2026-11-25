@@ -1,6 +1,7 @@
 # A entrada da aplicação. A Vercel procura um objeto chamado "app" num arquivo app.py.
 from fastapi import FastAPI
 
+from database import erros
 from routers import (
     acoes_os, apontamentos, autenticacao, busca, clientes, dashboard, exportacao, itens, itens_os,
     mecanicos, ordens_servico, veiculos,
@@ -8,6 +9,7 @@ from routers import (
 
 # A documentação fica em /api/docs, assim toda a aplicação mora em /api.
 app = FastAPI(docs_url="/api/docs", openapi_url="/api/openapi.json")
+erros.registrar(app)
 
 app.include_router(ordens_servico.router)
 app.include_router(itens_os.router)

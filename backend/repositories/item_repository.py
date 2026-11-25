@@ -1,54 +1,46 @@
-# Catálogo de itens (peças e serviços) em memória (dicionário que liga o id ao item).
-# Somem quando o servidor reinicia. O banco de dados vem depois.
-# O catálogo começa com uma peça e um serviço, como no banco; reiniciar() volta para eles.
-itens = {}
-proximo_id = 1
+# Catálogo de itens (peças e serviços) no banco (tabela item).
+# O banco começa com uma peça (id 1) e um serviço (id 2); reiniciar() volta para eles.
+from database.tabela import Tabela
+
+tabela = Tabela("item", "id_item", {
+    "tipo": "tipo", "descricao": "descricao", "codigo": "codigo", "preco": "preco",
+    "qtd_estoque": "qtd_estoque", "tempo_estimado_min": "tempo_estimado_min",
+})
+
+INICIAIS = {1: {"tipo": "PECA", "descricao": "Peça"}, 2: {"tipo": "SERVICO", "descricao": "Serviço"}}
 
 
+# Só para os testes: volta o catálogo para a peça e o serviço iniciais.
+# O TRUNCATE em cascata também esvazia os itens das OS.
 def reiniciar():
-    global proximo_id
-    itens.clear()
-    itens[1] = {"id": 1, "tipo": "PECA", "descricao": "Peça", "codigo": None, "preco": 0.0,
-                "qtd_estoque": None, "tempo_estimado_min": None}
-    itens[2] = {"id": 2, "tipo": "SERVICO", "descricao": "Serviço", "codigo": None, "preco": 0.0,
-                "qtd_estoque": None, "tempo_estimado_min": None}
-    proximo_id = 3
+    tabela.esvaziar()
+    for id, dados in INICIAIS.items():
+        tabela.criar_com_id(id, dados)
 
 
 def listar():
-    return list(itens.values())
+    return tabela.listar()
 
 
 def buscar(id: int):
-    return itens.get(id)
+    return tabela.buscar(id)
 
 
 def buscar_por_descricao(tipo: str, descricao: str):
-    return next((i for i in itens.values()
-                 if i["tipo"] == tipo and i["descricao"].lower() == descricao.lower()), None)
+    return tabela.buscar_por("tipo = %s AND lower(descricao) = lower(%s)", (tipo, descricao))
 
 
 def buscar_por_codigo(codigo: str):
-    return next((i for i in itens.values() if i["codigo"] == codigo), None)
+    return tabela.buscar_por("codigo = %s", (codigo,))
 
 
 def criar(dados: dict):
-    global proximo_id
-    item = {"id": proximo_id, **dados}
-    itens[proximo_id] = item
-    proximo_id += 1
-    return item
+    return tabela.criar(dados)
 
 
 def atualizar(id: int, dados: dict):
-    item = {"id": id, **dados}
-    itens[id] = item
-    return item
+    return tabela.atualizar(id, dados)
 
 
 def excluir(id: int):
-    del itens[id]
-
-
-# Começa já com a peça e o serviço.
-reiniciar()
+    tabela.excluir(id)

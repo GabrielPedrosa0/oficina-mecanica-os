@@ -3,7 +3,7 @@
 # análise de valor limite (os valores na beirada de cada regra).
 import pytest
 
-from repositories import ordem_servico_repository
+from tests.conftest import definir_valor_total
 
 
 def linhas_do_csv(r):
@@ -15,7 +15,7 @@ def linhas_do_csv(r):
 def test_exportar(client, os_corpo):
     client.post("/api/ordens-servico", json={**os_corpo, "data_abertura": "2026-11-10T08:00:00"})
     client.post("/api/ordens-servico", json={**os_corpo, "status": "ENTREGUE"})
-    ordem_servico_repository.ordens[2]["valor_total"] = 340.5
+    definir_valor_total(2, 340.5)
     r = client.get("/api/ordens-servico/exportar")  # não pode ser lido como {id}
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/csv")
@@ -25,7 +25,7 @@ def test_exportar(client, os_corpo):
     assert linhas[0].startswith("OS;Placa;Veículo;Cliente")
     assert len(linhas) == 3
     assert linhas[1].split(";") == ["2", "QRS4F21", "Volkswagen Gol 1.6", "Marina Souza", "",
-                                    "Barulho ao frear", "", "Entregue", "11/11/2026 08:10",
+                                    "Barulho ao frear", "Rafael Lima", "Entregue", "11/11/2026 08:10",
                                     "11/11/2026 17:00", "", "340,50"]
     assert linhas[2].endswith(";0,00")
 

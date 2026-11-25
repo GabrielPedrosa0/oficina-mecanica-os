@@ -1,40 +1,37 @@
-# Clientes em memória (dicionário que liga o id ao cliente). Somem quando o servidor
-# reinicia. O banco de dados vem depois.
-clientes = {}
-proximo_id = 1
+# Clientes no banco (tabela cliente).
+from database.tabela import Tabela
+
+tabela = Tabela("cliente", "id_cliente", {
+    "nome": "nome", "cpf_cnpj": "cpf_cnpj", "telefone": "telefone", "email": "email",
+    "cliente_desde": "cliente_desde", "cep": "cep", "logradouro": "logradouro", "numero": "numero",
+    "complemento": "complemento", "bairro": "bairro", "cidade": "cidade", "uf": "uf",
+})
 
 
+# Só para os testes: apaga todos os clientes (e, em cascata, veículos e OS).
 def reiniciar():
-    global proximo_id
-    clientes.clear()
-    proximo_id = 1
+    tabela.esvaziar()
 
 
 def listar():
-    return list(clientes.values())
+    return tabela.listar()
 
 
 def buscar(id: int):
-    return clientes.get(id)
+    return tabela.buscar(id)
 
 
 def buscar_por_email(email: str):
-    return next((c for c in clientes.values() if c["email"] == email), None)
+    return tabela.buscar_por("email = %s", (email,))
 
 
 def criar(dados: dict):
-    global proximo_id
-    cliente = {"id": proximo_id, **dados}
-    clientes[proximo_id] = cliente
-    proximo_id += 1
-    return cliente
+    return tabela.criar(dados)
 
 
 def atualizar(id: int, dados: dict):
-    cliente = {"id": id, **dados}
-    clientes[id] = cliente
-    return cliente
+    return tabela.atualizar(id, dados)
 
 
 def excluir(id: int):
-    del clientes[id]
+    tabela.excluir(id)

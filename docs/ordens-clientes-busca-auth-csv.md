@@ -1,6 +1,7 @@
 # Ordens de serviço, clientes, pesquisa, autenticação e exportação
 
-Dados em memória (dicionários nos `repositories/`): tudo se perde ao reiniciar o servidor. O banco de dados vem depois.
+Dados no PostgreSQL do Supabase, nas tabelas de `banco/modelo_logico_oficina.sql`. Veja a seção
+**Banco de dados** no fim deste arquivo.
 Nomes em português, erros com `HTTPException` e mensagens acionáveis, como no código de veículos do template.
 
 ## O que está implementado
@@ -100,5 +101,19 @@ leitura ("2 veículos" na tela), não é coluna.
    histórico deve ficar com o dono da época, a OS precisa de `cliente_id` próprio.
 3. **E-mail do cliente único.** Foi escolha minha, o guia não pede.
 4. **Login** ainda não protege nenhuma rota; falta o fluxo de nova senha e o envio do e-mail de recuperação.
-   O usuário de desenvolvimento é `recepcao@oficina.com.br` / `oficina123` e pode ser trocado com as variáveis `ADMIN_EMAIL` e
-   `ADMIN_SENHA`. **Troque antes de publicar.**
+   Com a tabela `usuario` vazia, o primeiro login cria o usuário inicial (perfil `ADMIN`) com `ADMIN_EMAIL` e
+   `ADMIN_SENHA` (padrão `recepcao@oficina.com.br` / `oficina123`). **Troque antes de publicar.**
+   O token é assinado (HMAC) com `CHAVE_SECRETA`, então vale em qualquer instância da Vercel sem tabela de sessões.
+
+## Banco de dados
+
+- **Conexão:** `backend/database/connection.py` lê `DATABASE_URL` (Supabase → *Connect* → *Transaction pooler*; na Vercel, em *Settings → Environment Variables*).
+  Localmente, copie `backend/.env.example` para `backend/.env` e preencha.
+- **Criar as tabelas:** `cd backend && python -m database.criar_tabelas` (com `--exemplos` também entram 2 mecânicos).
+  Não apaga nada se as tabelas já existem. Também dá para colar `banco/modelo_logico_oficina.sql` no SQL Editor do Supabase.
+- **Repositories:** cada um descreve a sua tabela (campo da API → coluna, ex.: `quilometragem` → `km_atual`) com
+  `database/tabela.py`. As funções continuam as mesmas, então services e rotas não mudaram.
+- **Leitura da OS:** traz `mecanico` (nome), `servico` (primeiro serviço lançado) e `valor_total` (visão `vw_os_total`).
+- **Erros do banco** (repetido, valor inválido, sem conexão) viram 409/422/503 em `database/erros.py`.
+- **Testes:** precisam de um PostgreSQL só para eles em `TEST_DATABASE_URL` (as tabelas dele são apagadas e recriadas).
+  Sem essa variável os testes são pulados. Nunca aponte para o banco de produção.

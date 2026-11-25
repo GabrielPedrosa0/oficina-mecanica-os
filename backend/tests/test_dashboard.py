@@ -8,9 +8,9 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from repositories import ordem_servico_repository
 from routers import clientes, dashboard, ordens_servico
 from services import dashboard_service
+from tests.conftest import definir_valor_total
 
 AGORA = datetime(2026, 11, 11, 10, 0)
 
@@ -103,7 +103,7 @@ def test_faturamento(client, os_corpo, status, conclusao, faturamento):
     abertura = "2026-10-01T00:00:00"
     os_ = nova_os(client, os_corpo, status=status, data_abertura=abertura, data_previsao=None,
                   data_conclusao=conclusao)
-    ordem_servico_repository.ordens[os_["id"]]["valor_total"] = 100.10
+    definir_valor_total(os_["id"], 100.10)
     assert client.get("/api/dashboard/resumo").json()["faturamento_mes"] == faturamento
 
 
