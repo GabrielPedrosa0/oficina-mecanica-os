@@ -1,7 +1,8 @@
 // Endereços das telas. Integrante 6.
 // Para criar uma tela nova: crie a página em pages/, acrescente a <Route> aqui e,
 // se ela aparece no menu, acrescente também em components/layout/itensMenu.js.
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import LayoutPrincipal from '../components/layout/LayoutPrincipal'
 import RotaPrivada, { RotaPerfil } from './RotaPrivada'
 
@@ -23,6 +24,9 @@ import UsuariosPage from '../pages/Usuarios/UsuariosPage'
 import AgendaPage from '../pages/Agenda/AgendaPage'
 import MaisPage from '../pages/Mais/MaisPage'
 import NaoEncontradaPage from '../pages/NaoEncontrada/NaoEncontradaPage'
+import ValidacaoPage from '../pages/Validacao/ValidacaoPage'
+import GerarLinkPage from '../pages/Validacao/GerarLinkPage'
+import { registrar } from '../utils/registrador'
 
 // As rotas sem o roteador: a vitrine de componentes reaproveita isto dentro do roteador dela.
 export function RotasApp() {
@@ -30,6 +34,8 @@ export function RotasApp() {
     <Routes>
       {/* Fora do layout: tela cheia, sem menu */}
       <Route path="/login" element={<LoginPage />} />
+      {/* Modo validação: o participante entra pelo link, sem login. */}
+      <Route path="/validacao" element={<ValidacaoPage />} />
 
       {/* Dentro do layout: menu lateral (PC) e abas (celular). Só com login. */}
       <Route
@@ -70,6 +76,7 @@ export function RotasApp() {
           }
         />
         <Route path="mais" element={<MaisPage />} />
+        <Route path="validacao/gerar-link" element={<GerarLinkPage />} />
 
         {/* Fora do menu do MVP: aberta pelo link "Agenda" do Painel. */}
         <Route path="agenda" element={<AgendaPage />} />
@@ -83,9 +90,19 @@ export function RotasApp() {
   )
 }
 
+// Modo validação: anota cada troca de tela (o registrador ignora fora do modo validação).
+function OuvinteDeTelas() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    if (pathname !== '/validacao') registrar({ tipo: 'TELA' })
+  }, [pathname])
+  return null
+}
+
 export default function AppRoutes() {
   return (
     <BrowserRouter>
+      <OuvinteDeTelas />
       <RotasApp />
     </BrowserRouter>
   )
