@@ -10,6 +10,10 @@
 
 export const API_BASE = import.meta.env.VITE_API_URL ?? '/api'
 export const CHAVE_TOKEN = 'oficina_token'
+export const CHAVE_USUARIO = 'oficina_usuario'
+// Evento disparado quando o backend responde 401 a um pedido com token (sessão expirou).
+// O RotaPrivada escuta e leva ao login com "Sua sessão expirou. Entre de novo."
+export const EVENTO_SESSAO_EXPIRADA = 'oficina:sessao-expirada'
 
 // Erro com o status HTTP e a mensagem que o backend mandou em `detail`.
 export class ErroApi extends Error {
@@ -57,6 +61,17 @@ export function lerToken() {
   }
 }
 
+// Apaga o login salvo e avisa a tela (ver EVENTO_SESSAO_EXPIRADA).
+export function expirarSessao() {
+  try {
+    localStorage.removeItem(CHAVE_TOKEN)
+    localStorage.removeItem(CHAVE_USUARIO)
+  } catch {
+    // sem localStorage não há o que apagar
+  }
+  window.dispatchEvent(new Event(EVENTO_SESSAO_EXPIRADA))
+}
+
 function cabecalhos(extra = {}) {
   const token = lerToken()
   return {
@@ -88,6 +103,7 @@ async function requisitar(caminho, opcoes = {}) {
     // Erro 5xx sem corpo nenhum = o repasse do Vite não achou o backend (ele está desligado).
     if (!texto && resposta.status >= 500) throw new ErroApi(MENSAGEM_DESLIGADO, 0)
     const corpo = lerJson(texto)
+    if (resposta.status === 401 && lerToken() && !caminho.startsWith('/auth/login')) expirarSessao()
     throw new ErroApi(mensagemDoErro(corpo, resposta.status), resposta.status, corpo?.detail)
   }
   return resposta

@@ -1,3 +1,11 @@
+/* =====================================================================
+   Oficina App — tokens de design (cores, fontes, espaços e raios)
+   Fonte: Figma "Oficina App · Fundações". Integrante 6.
+
+   REGRA: nas telas e componentes use SEMPRE as cores por função
+   (--fundo-*, --texto-*, --borda-*, --status-*). Os tons da paleta
+   (--grafite-500, --laranja-600...) existem só para montar as funções.
+   ===================================================================== */
 
 :root {
   /* ---------- Paleta (não usar direto) ---------- */
@@ -42,7 +50,7 @@
 
   --branco: #ffffff;
 
-  /* ---------- FUNDO ---------- */
+  /* ---------- Cores por função: FUNDO ---------- */
   --fundo-pagina: var(--grafite-50);
   --fundo-superficie: var(--branco);
   --fundo-sutil: var(--grafite-100);
@@ -55,7 +63,7 @@
   --fundo-perigo: var(--vermelho-600);
   --fundo-perigo-hover: var(--vermelho-700);
 
-  /* ---------- TEXTO ---------- */
+  /* ---------- Cores por função: TEXTO ---------- */
   --texto-principal: var(--grafite-900);
   --texto-secundario: var(--grafite-600);
   --texto-apoio: var(--grafite-500);
@@ -65,14 +73,14 @@
   --texto-primario: var(--laranja-700);
   --texto-perigo: var(--vermelho-700);
 
-  /* ---------- BORDA ---------- */
+  /* ---------- Cores por função: BORDA ---------- */
   --borda-padrao: var(--grafite-200);
   --borda-forte: var(--grafite-300);
   --borda-foco: var(--laranja-600);
   --borda-perigo: var(--vermelho-600);
   --borda-invertida: var(--grafite-700);
 
-  /* ---------- STATUS (selos) ---------- */
+  /* ---------- Cores por função: STATUS (selos) ---------- */
   --status-neutro-fundo: var(--grafite-100);
   --status-neutro-texto: var(--grafite-700);
   --status-info-fundo: var(--azul-100);

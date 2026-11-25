@@ -23,6 +23,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from database import connection
 from database.tabela import Tabela
 from schemas.auth_schema import EsqueciSenha, Login
+from schemas.usuario_schema import Usuario
 
 HORAS_DA_SESSAO = 8
 MINUTOS_DA_RECUPERACAO = 30
@@ -159,3 +160,69 @@ def garantir_usuario_inicial():
         criar_usuario(os.environ.get("ADMIN_NOME", "Administrador"),
                       os.environ.get("ADMIN_EMAIL", "recepcao@oficina.com.br"),
                       os.environ.get("ADMIN_SENHA", "oficina123"), perfil="ADMIN")
+
+
+# ------------------------------------------------------------------ Gestão de usuários (/api/usuarios)
+
+# Só o perfil ADMIN (o "Gerente" das telas) gerencia usuários.
+def exigir_admin(usuario=Depends(usuario_atual)):
+    if usuario["perfil"] != "ADMIN":
+        raise HTTPException(status_code=403, detail="Só o perfil Gerente pode gerenciar usuários.")
+    return usuario
+
+
+def buscar_usuario(id: int):
+    usuario = tabela.buscar(id)
+    if usuario is None:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    return usuario
+
+
+def validar_usuario(entrada: Usuario, id: int | None = None):
+    nome = entrada.nome.strip()
+    if nome == "":
+        raise HTTPException(status_code=422, detail="O nome é obrigatório.")
+    if len(nome) > 120:
+        raise HTTPException(status_code=422, detail="O nome pode ter no máximo 120 caracteres.")
+    email = entrada.email.strip().lower()
+    if not EMAIL.match(email) or len(email) > 120:
+        raise HTTPException(status_code=422, detail="E-mail inválido.")
+    repetido = buscar_por_email(email)
+    if repetido is not None and repetido["id"] != id:
+        raise HTTPException(status_code=409, detail="Já existe um usuário com esse e-mail.")
+    senha = entrada.senha or ""
+    if id is None and senha == "":
+        raise HTTPException(status_code=422, detail="Informe a senha.")
+    if senha and len(senha) < 8:
+        raise HTTPException(status_code=422, detail="A senha precisa ter pelo menos 8 caracteres.")
+    return nome, email, senha
+
+
+def listar_usuarios():
+    return [usuario_publico(u) for u in sorted(tabela.listar(), key=lambda u: u["nome"].lower())]
+
+
+def cadastrar_usuario(entrada: Usuario):
+    nome, email, senha = validar_usuario(entrada)
+    return usuario_publico(criar_usuario(nome, email, senha, entrada.perfil))
+
+
+# O Gerente não pode tirar de si mesmo o perfil ADMIN (ficaria sem acesso a esta tela).
+def atualizar_usuario(id: int, entrada: Usuario, quem_pede):
+    buscar_usuario(id)
+    nome, email, senha = validar_usuario(entrada, id)
+    if id == quem_pede["id"] and entrada.perfil != "ADMIN":
+        raise HTTPException(status_code=409, detail="Você não pode tirar o seu próprio perfil de Gerente.")
+    dados = {"nome": nome, "email": email, "perfil": entrada.perfil}
+    if senha:
+        dados["senha_hash"] = hash_senha(senha)
+    return usuario_publico(tabela.atualizar(id, dados))
+
+
+# O token é assinado e não fica guardado: depois de excluído, o usuário cai no 401 na próxima
+# chamada, porque usuario_atual não o encontra mais na tabela.
+def excluir_usuario(id: int, quem_pede):
+    buscar_usuario(id)
+    if id == quem_pede["id"]:
+        raise HTTPException(status_code=409, detail="Você não pode excluir o seu próprio usuário.")
+    tabela.excluir(id)

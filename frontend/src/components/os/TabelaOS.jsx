@@ -1,3 +1,8 @@
+// Tabela de ordens do PC (Figma "Tabela de ordens"). Integrante 2.
+// Clicar no cabeçalho reordena; clicar na linha abre o Detalhe da OS.
+//
+//   <TabelaOS ordens={dados} />
+//   <TabelaOS ordens={dados} ordenavel={false} onClicar={(os) => abrirModal(os)} />
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowDown, ArrowUp } from 'lucide-react'
@@ -94,7 +99,7 @@ export default function TabelaOS({ ordens = [], ordenavel = true, onClicar }) {
               <td>{os.cliente_nome ?? '—'}</td>
               <td className="tabela-os__servico">
                 {resumoServico(os)}
-                {os.garantia && <Etiqueta className="tabela-os__etiqueta">Garantia</Etiqueta>}
+                {os.eh_garantia && <Etiqueta className="tabela-os__etiqueta">Garantia</Etiqueta>}
               </td>
               <td className={os.mecanico ? '' : 'texto-apoio'}>
                 {os.mecanico ? primeiroNome(os.mecanico) : 'A definir'}

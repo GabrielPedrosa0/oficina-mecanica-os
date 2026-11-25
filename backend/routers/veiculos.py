@@ -8,8 +8,8 @@ router = APIRouter(prefix="/api/veiculos", tags=["Veículos"])
 
 # GET /api/veiculos  ou  GET /api/veiculos?placa=QRS
 @router.get("")
-def listar_veiculos(placa: str | None = None):
-    return veiculo_service.listar_veiculos(placa)
+def listar_veiculos(placa: str | None = None, busca: str | None = None):
+    return veiculo_service.listar_veiculos(placa, busca)
 
 
 # GET /api/veiculos/1

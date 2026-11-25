@@ -1,6 +1,5 @@
 // Status da ordem de serviço. Integrante 3.
-// Os códigos (chaves) são os mesmos do backend: schemas/ordem_servico_schema.py e core/enums.py.
-// O código do cancelamento é CANCELADA (como no backend e no CHECK ck_os_status); o texto mostrado é "Cancelado".
+// Os códigos (chaves) são os mesmos do backend: schemas/ordem_servico_schema.py e o CHECK ck_os_status do banco.
 //
 // `tom` liga o status à cor do selo (ver SeloStatus.jsx e --status-* no tokens.css).
 // Status sempre aparece com texto, nunca só com cor.
@@ -16,7 +15,7 @@ export const STATUS_OS = {
   },
   PRONTA: { valor: 'PRONTA', rotulo: 'Pronto', rotuloFiltro: 'Prontas', tom: 'sucesso' },
   ENTREGUE: { valor: 'ENTREGUE', rotulo: 'Entregue', rotuloFiltro: 'Entregues', tom: 'entregue' },
-  CANCELADA: { valor: 'CANCELADA', rotulo: 'Cancelado', rotuloFiltro: 'Canceladas', tom: 'perigo' },
+  CANCELADA: { valor: 'CANCELADA', rotulo: 'Cancelada', rotuloFiltro: 'Canceladas', tom: 'perigo' },
 }
 
 // Na ordem do ciclo da OS.
@@ -42,7 +41,7 @@ export const FILTROS_OS_CELULAR = FILTROS_OS.filter((f) =>
 )
 
 // Botão principal do Detalhe da OS, conforme o status atual (seção 3.4).
-// Entregue e Cancelado não têm botão.
+// Entregue e Cancelada não têm botão.
 export const ACAO_PRINCIPAL = {
   ORCAMENTO: { rotulo: 'Aprovar orçamento', proximo: 'EM_SERVICO' },
   EM_SERVICO: { rotulo: 'Marcar pronta', proximo: 'PRONTA' },
@@ -50,8 +49,9 @@ export const ACAO_PRINCIPAL = {
   PRONTA: { rotulo: 'Entregar veículo', proximo: 'ENTREGUE' },
 }
 
-// Para onde cada status pode ir (espelha TRANSICOES de backend/services/acao_os_service.py).
-// O backend é quem decide de verdade (409); isto serve só para esconder botões que não fazem sentido.
+// Para onde cada status pode ir: as mesmas de TRANSICOES em backend/services/acao_os_service.py.
+// O backend é quem decide de verdade; isto serve só para esconder botões que não fazem sentido.
+// Só se cancela no ORCAMENTO (o cliente recusou o orçamento); PRONTA pode voltar para EM_SERVICO.
 export const TRANSICOES = {
   ORCAMENTO: ['EM_SERVICO', 'CANCELADA'],
   EM_SERVICO: ['AGUARDANDO_PECA', 'PRONTA'],

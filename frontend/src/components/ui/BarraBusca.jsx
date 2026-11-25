@@ -1,3 +1,8 @@
+// Campo de busca com lupa e botão de limpar (barra superior do PC e listas do celular). Integrante 6.
+// A busca começa a partir de 2 caracteres (especificação 2.4); combine com useDebounce.
+//
+//   const [texto, setTexto] = useState('')
+//   <BarraBusca valor={texto} onChange={setTexto} placeholder="Placa, cliente ou OS" />
 import { Search, X } from 'lucide-react'
 import './ui.css'
 

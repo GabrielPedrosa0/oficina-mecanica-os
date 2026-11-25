@@ -24,7 +24,8 @@ from repositories import (
     mecanico_repository, ordem_servico_repository, veiculo_repository,
 )
 from routers import (
-    acoes_os, apontamentos, autenticacao, busca, clientes, exportacao, itens, itens_os, mecanicos, ordens_servico,
+    acoes_os, agenda, apontamentos, autenticacao, busca, clientes, exportacao, itens, itens_os, mecanicos,
+    ordens_servico, pecas, servicos, usuarios, veiculos,
 )
 from services import auth_service
 
@@ -61,7 +62,8 @@ def client():
     app = FastAPI()
     erros.registrar(app)
     for router in (ordens_servico.router, itens_os.router, acoes_os.router, apontamentos.router, clientes.router,
-                   busca.router, autenticacao.router, exportacao.router, mecanicos.router, itens.router):
+                   busca.router, autenticacao.router, exportacao.router, mecanicos.router, itens.router,
+                   agenda.router, servicos.router, pecas.router, usuarios.router, veiculos.router):
         app.include_router(router)
     return TestClient(app)
 

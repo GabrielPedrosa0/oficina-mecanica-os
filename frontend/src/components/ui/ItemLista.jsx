@@ -1,3 +1,8 @@
+// Linha de lista com avatar ou ícone, título, subtítulo e seta (Figma: item de cliente). Integrante 6.
+//
+//   <ItemLista avatar="Marina Souza" titulo="Marina Souza"
+//              subtitulo="1 veículo · (85) 90000-0001" para="/clientes/1" />
+//   <ItemLista icone={Car} titulo="Volkswagen Gol 1.6" subtitulo="QRS4F21" direita={<SeloStatus status="PRONTA" />} />
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import Avatar from './Avatar'

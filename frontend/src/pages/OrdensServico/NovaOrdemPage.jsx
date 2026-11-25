@@ -1,229 +1,252 @@
-// Tela "Nova ordem de serviço" (issue #46, especificação 3.5).
-// Começa pela placa: se o veículo existe, o cliente e o km vêm dele. Serviços e peças
-// são adicionados depois, no detalhe da OS.
+// Nova OS (Figma "PC — Nova OS" e "Celular — Nova OS"). Integrante 2.
+// Placa primeiro: achou o veículo, o cliente aparece e o Km vem preenchido; não achou, cadastra e volta.
+// Meta do teste com usuários: abrir uma OS em menos de 2 minutos.
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Car, Plus } from 'lucide-react'
 import CabecalhoPagina from '../../components/layout/CabecalhoPagina'
 import RodapeAcoes from '../../components/layout/RodapeAcoes'
 import Aviso from '../../components/ui/Aviso'
 import Botao from '../../components/ui/Botao'
 import Campo from '../../components/ui/Campo'
-import Cartao from '../../components/ui/Cartao'
-import GrupoCampos from '../../components/ui/GrupoCampos'
+import Cartao, { Dado, GradeDados } from '../../components/ui/Cartao'
 import Interruptor from '../../components/ui/Interruptor'
-import Modal from '../../components/ui/Modal'
+import { ModalConfirmacao } from '../../components/ui/Modal'
+import Placa from '../../components/ui/Placa'
+import SeloStatus from '../../components/ui/SeloStatus'
 import { useAcao, useApi } from '../../hooks/useApi'
 import { listarMecanicos } from '../../services/mecanicosService'
 import { cadastrarOrdem } from '../../services/ordensServicoService'
 import { listarVeiculos } from '../../services/veiculosService'
-import { deCampoDataHora } from '../../utils/formatadores'
+import { deCampoDataHora, formatarExpediente, formatarKm } from '../../utils/formatadores'
+import {
+  limparPlaca,
+  obrigatorio,
+  validar,
+  validarNumeroNaoNegativo,
+  validarPlaca,
+  validarPrevisao,
+} from '../../utils/validadores'
+import './ordens.css'
 
-const ID_FORMULARIO = 'form-nova-os'
-const FORMULARIO_VAZIO = { km: '', previsao: '', mecanicoId: '', problema: '', observacoes: '', garantia: false }
-
-// "qrs-4f21" -> "QRS4F21": compara placas sem depender de hífen ou caixa.
-const normalizarPlaca = (texto) => texto.toUpperCase().replace(/[^A-Z0-9]/g, '')
+const VAZIO = {
+  placa: '',
+  quilometragem: null, // null = ainda não digitado: mostra o Km do cadastro do veículo
+  data_previsao: '',
+  mecanico_id: '',
+  problema_relatado: '',
+  observacoes: '',
+}
 
 export default function NovaOrdemPage() {
   const navigate = useNavigate()
-  const [placa, setPlaca] = useState('')
-  const [veiculo, setVeiculo] = useState(null) // o veículo achado pela placa
-  const [placaBuscada, setPlacaBuscada] = useState('') // última placa pesquisada
-  const [form, setForm] = useState(FORMULARIO_VAZIO)
+  const [parametros] = useSearchParams()
+  const placaInicial = limparPlaca(parametros.get('placa'))
+  const [form, setForm] = useState({ ...VAZIO, placa: placaInicial })
+  // A placa procurada (ao sair do campo ou Enter). Vindo do cadastro de veículo, já procura.
+  const [placaBuscada, setPlacaBuscada] = useState(placaInicial)
+  const [garantia, setGarantia] = useState(false)
   const [erros, setErros] = useState({})
-  const [confirmarSaida, setConfirmarSaida] = useState(false)
+  const [sair, setSair] = useState(false)
 
-  const mecanicos = useApi(listarMecanicos) // se falhar, só sobra "A definir"
-  const busca = useAcao(listarVeiculos)
+  const mecanicos = useApi(() => listarMecanicos())
+  const placaValida = !validarPlaca(placaBuscada)
+  const procura = useApi(() => listarVeiculos({ placa: placaBuscada }), [placaBuscada], { ativo: placaValida })
   const criar = useAcao(cadastrarOrdem)
 
-  const naoAchou = placaBuscada !== '' && !veiculo
-  const sujo = placa !== '' || Object.entries(form).some(([chave, valor]) => valor !== FORMULARIO_VAZIO[chave])
+  // O veículo vale enquanto a placa do campo for a mesma que foi procurada.
+  const placaLimpa = limparPlaca(form.placa)
+  const procurada = placaValida && placaBuscada === placaLimpa && !procura.carregando && !procura.erro
+  const veiculo = procurada ? (procura.dados ?? []).find((v) => v.placa === placaLimpa) : null
+  const naoAchou = procurada && procura.dados && !veiculo
+  const km = form.quilometragem ?? String(veiculo?.quilometragem ?? '')
 
-  function mudar(campo, valor) {
-    setForm((atual) => ({ ...atual, [campo]: valor }))
-    setErros((atual) => ({ ...atual, [campo]: undefined }))
-  }
-
-  function mudarPlaca(texto) {
-    setPlaca(texto)
-    setVeiculo(null) // mudou a placa: o veículo anterior não vale mais
-    setPlacaBuscada('')
-    setErros((atual) => ({ ...atual, placa: undefined }))
-  }
-
-  // Ao sair do campo da placa, procura o veículo no backend.
-  async function procurarVeiculo() {
-    const procurada = normalizarPlaca(placa)
-    if (procurada.length < 7 || procurada === placaBuscada) return
-    const lista = await busca.executar({ placa: procurada })
-    if (lista === null) return // erro de rede: aparece no Aviso
-    const achado = lista.find((v) => normalizarPlaca(v.placa) === procurada) ?? null
-    setPlacaBuscada(procurada)
-    setVeiculo(achado)
-    if (achado) setForm((atual) => ({ ...atual, km: String(achado.quilometragem ?? '') }))
-  }
-
-  function validar() {
-    const novos = {}
-    if (!veiculo) novos.placa = 'Informe a placa de um veículo cadastrado.'
-    if (form.km !== '' && Number(form.km) < 0) novos.km = 'A quilometragem não pode ser negativa.'
-    if (!form.problema.trim()) novos.problema = 'Descreva o problema relatado.'
-    setErros(novos)
-    return Object.keys(novos).length === 0
-  }
+  const mudar = (campo) => (e) => setForm((f) => ({ ...f, [campo]: e.target.value }))
+  const procurarVeiculo = () => setPlacaBuscada(placaLimpa)
 
   async function salvar(e) {
     e.preventDefault()
-    if (!validar()) return
+    const encontrados = validar({
+      placa: validarPlaca(form.placa) ?? (veiculo ? null : 'Procure um veículo cadastrado com esta placa.'),
+      quilometragem: validarNumeroNaoNegativo(km),
+      data_previsao: validarPrevisao(form.data_previsao),
+      problema_relatado: obrigatorio(form.problema_relatado, 'Descreva o problema relatado pelo cliente.'),
+    })
+    setErros(encontrados)
+    if (Object.keys(encontrados).length) return
     const os = await criar.executar({
       veiculo_id: veiculo.id,
-      mecanico_id: form.mecanicoId ? Number(form.mecanicoId) : null,
-      quilometragem: form.km === '' ? null : Number(form.km),
-      problema_relatado: form.problema.trim(),
-      eh_garantia: form.garantia,
-      data_previsao: deCampoDataHora(form.previsao),
+      quilometragem: km === '' ? null : Number(km),
+      data_previsao: deCampoDataHora(form.data_previsao),
+      mecanico_id: form.mecanico_id ? Number(form.mecanico_id) : null,
+      problema_relatado: form.problema_relatado.trim(),
       observacoes: form.observacoes.trim() || null,
+      eh_garantia: garantia,
+      status: 'ORCAMENTO',
     })
-    if (os) navigate(`/ordens/${os.id}`)
+    if (os) navigate(`/ordens/${os.id}`, { replace: true })
   }
 
-  function cancelar() {
-    if (sujo) setConfirmarSaida(true)
-    else navigate('/ordens')
-  }
-
-  const botoes = (
-    <>
-      <Botao variante="secundario" onClick={cancelar}>
-        Cancelar
-      </Botao>
-      <Botao type="submit" form={ID_FORMULARIO} carregando={criar.executando}>
-        Criar ordem
-      </Botao>
-    </>
-  )
+  const preenchido = Object.values(form).some((v) => v !== '' && v !== null) || garantia
+  const cancelar = () => (preenchido ? setSair(true) : navigate(-1))
+  const voltarParaCa = `/ordens/nova?placa=${placaLimpa}`
 
   return (
     <>
-      <CabecalhoPagina titulo="Nova ordem de serviço" voltarPara="/ordens" acoes={botoes} />
-      <div className="pagina">
-        <form id={ID_FORMULARIO} className="pilha" onSubmit={salvar} noValidate>
-          {criar.erro && (
-            <Aviso tom="perigo" titulo="Não foi possível criar a ordem" onFechar={criar.limparErro}>
-              {criar.erro.message}
-            </Aviso>
-          )}
-          {busca.erro && (
-            <Aviso tom="perigo" titulo="Não foi possível buscar o veículo" onFechar={busca.limparErro}>
-              {busca.erro.message}
-            </Aviso>
-          )}
+      <CabecalhoPagina titulo="Nova ordem de serviço" tituloCelular="Nova OS" voltarPara={-1} />
+      <form className="pagina nova-os" onSubmit={salvar} noValidate>
+        {criar.erro && (
+          <Aviso tom="perigo" titulo="Não foi possível criar a OS" onFechar={criar.limparErro}>
+            {criar.erro.message}
+          </Aviso>
+        )}
 
-          <Cartao titulo="Veículo">
-            <GrupoCampos colunas={2}>
-              <Campo
-                rotulo="Placa"
-                value={placa}
-                onChange={(e) => mudarPlaca(e.target.value)}
-                onBlur={procurarVeiculo}
-                placeholder="ABC1D23"
-                maxLength={8}
-                autoFocus
-                erro={erros.placa}
-                ajuda={busca.executando ? 'Procurando veículo...' : undefined}
-              />
-              <Campo
-                rotulo="Km na entrada"
-                tipo="number"
-                min="0"
-                value={form.km}
-                onChange={(e) => mudar('km', e.target.value)}
-                erro={erros.km}
-              />
-            </GrupoCampos>
-            {veiculo && (
-              <Aviso tom="sucesso" titulo={`${veiculo.marca} ${veiculo.modelo}`}>
-                Cliente: {veiculo.cliente_nome ?? (veiculo.cliente_id ? `nº ${veiculo.cliente_id}` : 'sem cliente')}
-              </Aviso>
-            )}
-            {naoAchou && (
-              <Aviso tom="atencao" titulo="Veículo não encontrado">
-                Nenhum veículo com essa placa.{' '}
-                <Botao variante="sutil" tamanho="pequeno" para="/veiculos/novo">
-                  Cadastrar veículo
-                </Botao>
-              </Aviso>
-            )}
-          </Cartao>
-
-          <Cartao titulo="Atendimento">
-            <GrupoCampos colunas={2}>
-              <Campo
-                rotulo="Previsão de entrega"
-                tipo="datetime-local"
-                opcional
-                value={form.previsao}
-                onChange={(e) => mudar('previsao', e.target.value)}
-              />
-              <Campo
-                rotulo="Mecânico"
-                tipo="select"
-                value={form.mecanicoId}
-                onChange={(e) => mudar('mecanicoId', e.target.value)}
+        <Cartao titulo="Veículo">
+          <div className="nova-os__veiculo">
+            <Campo
+              rotulo="Placa"
+              value={form.placa}
+              onChange={(e) => setForm((f) => ({ ...f, placa: e.target.value, quilometragem: null }))}
+              onBlur={procurarVeiculo}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  procurarVeiculo()
+                }
+              }}
+              placeholder="ABC1D23"
+              autoCapitalize="characters"
+              autoFocus
+              erro={erros.placa}
+              ajuda={procura.carregando ? 'Procurando o veículo...' : 'Digite a placa e saia do campo para buscar.'}
+            />
+          </div>
+          {procura.erro && <Aviso tom="perigo">{procura.erro.message}</Aviso>}
+          {naoAchou && (
+            <Aviso tom="atencao" titulo={`Nenhum veículo com a placa ${placaLimpa}`}>
+              <p>Cadastre o veículo e volte para cá para abrir a OS.</p>
+              <Botao
+                variante="secundario"
+                tamanho="pequeno"
+                icone={Plus}
+                para={`/veiculos/novo?placa=${placaLimpa}&voltar=${encodeURIComponent(voltarParaCa)}`}
               >
-                <option value="">A definir</option>
-                {(mecanicos.dados ?? []).map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.nome}
-                  </option>
-                ))}
-              </Campo>
-            </GrupoCampos>
+                Cadastrar veículo
+              </Botao>
+            </Aviso>
+          )}
+          {veiculo && (
+            <>
+              <GradeDados>
+                <Dado rotulo="Veículo">
+                  <span className="linha">
+                    <Car size={16} aria-hidden="true" /> {veiculo.marca} {veiculo.modelo} · {veiculo.ano}
+                  </span>
+                </Dado>
+                <Dado rotulo="Cliente">{veiculo.cliente_nome ?? 'Sem cliente vinculado'}</Dado>
+                <Dado rotulo="Km no cadastro">{formatarKm(veiculo.quilometragem)}</Dado>
+                <Dado rotulo="Placa">
+                  <Placa placa={veiculo.placa} />
+                </Dado>
+              </GradeDados>
+              {veiculo.os_aberta_id && (
+                <Aviso tom="atencao" titulo="Este veículo já tem uma OS aberta">
+                  <span className="linha">
+                    <SeloStatus status={veiculo.status_os_aberta} />
+                    <Link to={`/ordens/${veiculo.os_aberta_id}`} className="link-secao">
+                      Abrir OS {veiculo.os_aberta_id}
+                    </Link>
+                  </span>
+                </Aviso>
+              )}
+            </>
+          )}
+        </Cartao>
+
+        <Cartao titulo="Ordem de serviço">
+          <div className="detalhe-os__duas">
             <Campo
-              rotulo="Problema relatado"
-              tipo="textarea"
-              value={form.problema}
-              onChange={(e) => mudar('problema', e.target.value)}
-              erro={erros.problema}
-            />
-            <Campo
-              rotulo="Observações"
-              tipo="textarea"
+              rotulo="Km na entrada"
+              tipo="number"
+              min="0"
+              inputMode="numeric"
+              value={km}
+              onChange={mudar('quilometragem')}
+              erro={erros.quilometragem}
               opcional
-              value={form.observacoes}
-              onChange={(e) => mudar('observacoes', e.target.value)}
             />
-            <Interruptor
-              rotulo="Retorno em garantia"
-              ajuda="Serviço já feito, sem cobrança."
-              ligado={form.garantia}
-              onChange={(valor) => mudar('garantia', valor)}
+            <Campo
+              rotulo="Previsão de entrega"
+              tipo="datetime-local"
+              value={form.data_previsao}
+              onChange={mudar('data_previsao')}
+              erro={erros.data_previsao}
+              opcional
             />
-          </Cartao>
+          </div>
+          <Campo
+            rotulo="Mecânico"
+            tipo="select"
+            value={form.mecanico_id}
+            onChange={mudar('mecanico_id')}
+            opcional
+            disabled={mecanicos.carregando}
+            ajuda={mecanicos.erro ? `Não foi possível carregar os mecânicos: ${mecanicos.erro.message}` : undefined}
+          >
+            <option value="">A definir</option>
+            {(mecanicos.dados ?? []).map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.nome} · {formatarExpediente(m.expediente_inicio, m.expediente_fim)}
+              </option>
+            ))}
+          </Campo>
+          <Campo
+            rotulo="Problema relatado"
+            tipo="textarea"
+            maxLength={1000}
+            value={form.problema_relatado}
+            onChange={mudar('problema_relatado')}
+            erro={erros.problema_relatado}
+            placeholder="O que o cliente contou: barulho, luz acesa no painel, revisão..."
+          />
+          <Campo
+            rotulo="Observações"
+            tipo="textarea"
+            maxLength={1000}
+            value={form.observacoes}
+            onChange={mudar('observacoes')}
+            opcional
+          />
+          <Interruptor
+            rotulo="Serviço em garantia"
+            ajuda="Retorno de um serviço já feito; não é cobrado"
+            ligado={garantia}
+            onChange={setGarantia}
+          />
+        </Cartao>
 
-          <p className="texto-apoio">Serviços, peças e apontamentos são adicionados depois, no detalhe da OS.</p>
-        </form>
-      </div>
-      <RodapeAcoes soCelular>{botoes}</RodapeAcoes>
+        <p className="nova-os__nota">Serviços, peças e apontamentos são adicionados depois, no detalhe da OS.</p>
 
-      <Modal
-        aberto={confirmarSaida}
-        onFechar={() => setConfirmarSaida(false)}
+        <RodapeAcoes>
+          <Botao variante="secundario" onClick={cancelar}>
+            Cancelar
+          </Botao>
+          <Botao type="submit" carregando={criar.executando}>
+            Criar ordem
+          </Botao>
+        </RodapeAcoes>
+      </form>
+
+      <ModalConfirmacao
+        aberto={sair}
         titulo="Sair sem salvar?"
-        rodape={
-          <>
-            <Botao variante="secundario" onClick={() => setConfirmarSaida(false)}>
-              Continuar editando
-            </Botao>
-            <Botao variante="perigo" onClick={() => navigate('/ordens')}>
-              Sair sem salvar
-            </Botao>
-          </>
-        }
-      >
-        <p>Os dados preenchidos serão perdidos.</p>
-      </Modal>
+        texto="O que você preencheu nesta OS será perdido."
+        rotuloConfirmar="Sair sem salvar"
+        rotuloCancelar="Continuar editando"
+        perigo
+        onConfirmar={() => navigate(-1)}
+        onCancelar={() => setSair(false)}
+      />
     </>
   )
 }

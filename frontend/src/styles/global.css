@@ -1,3 +1,8 @@
+/* =====================================================================
+   Estilos globais: fontes, reset, classes de texto e utilitários.
+   Integrante 6. Importado uma única vez, no main.jsx.
+   ===================================================================== */
+
 /* Fontes instaladas pelo npm (@fontsource): funcionam sem internet. */
 @import '@fontsource/barlow/400.css';
 @import '@fontsource/barlow/500.css';
@@ -109,9 +114,9 @@ svg {
   color: var(--texto-apoio);
 }
 
-/* 
+/* ---------------------------------------------------------------------
    Utilitários
-*/
+   --------------------------------------------------------------------- */
 
 /* Mostrar só no PC ou só no celular (mesmo corte do tokens.css). */
 @media (max-width: 899px) {

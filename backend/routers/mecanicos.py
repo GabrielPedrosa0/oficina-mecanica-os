@@ -8,8 +8,8 @@ router = APIRouter(prefix="/api/mecanicos", tags=["Mecânicos"])
 
 # GET /api/mecanicos
 @router.get("")
-def listar_mecanicos():
-    return mecanico_service.listar_mecanicos()
+def listar_mecanicos(em_expediente: bool = False):
+    return mecanico_service.listar_mecanicos(em_expediente)
 
 
 # GET /api/mecanicos/1

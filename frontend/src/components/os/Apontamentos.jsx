@@ -1,3 +1,8 @@
+// Apontamentos da OS: a linha do tempo do que aconteceu com o carro (Figma "Apontamento"). Integrante 3.
+// Do mais novo (em cima) para o mais antigo. Cada um: tipo, data/hora e descrição.
+//
+//   <Apontamentos apontamentos={lista} onRegistrar={() => setModal(true)} />
+//   apontamento = { id, tipo: 'DIAGNOSTICO', data: '2026-11-18T08:40:00', descricao, usuario? }
 import { rotuloApontamento } from '../../constants/apontamentos'
 import { formatarMomento } from '../../utils/formatadores'
 import './os.css'

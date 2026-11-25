@@ -1,7 +1,8 @@
 # Ações sobre a OS (3.5): mudar o status, enviar o orçamento e marcar como pronta.
 from fastapi import HTTPException
 
-from repositories import acao_os_repository, item_os_repository, ordem_servico_repository
+from core.texto import limpar
+from repositories import acao_os_repository, apontamento_repository, item_os_repository, ordem_servico_repository
 from services import dashboard_service, item_os_service, ordem_servico_service
 
 # Para quais status cada status pode ir. ENTREGUE e CANCELADA são o fim: deles não se sai.
@@ -20,7 +21,7 @@ TRANSICOES = {
 # Muda o status da OS se a transição for permitida (senão, 409).
 # Ao entregar, grava a data de conclusão se ela estiver vazia: o faturamento do painel
 # só conta as OS entregues que têm data_conclusao. Ela nunca fica antes da abertura.
-def mudar_status(id: int, novo: str):
+def mudar_status(id: int, novo: str, motivo: str | None = None):
     ordem = ordem_servico_service.buscar_ordem(id)
     atual = ordem["status"]
     if novo not in TRANSICOES.get(atual, ()):
@@ -30,7 +31,13 @@ def mudar_status(id: int, novo: str):
     dados["status"] = novo
     if novo == "ENTREGUE" and dados["data_conclusao"] is None:
         dados["data_conclusao"] = max(dashboard_service.agora(), dados["data_abertura"])
-    return ordem_servico_service.ordem_completa(ordem_servico_repository.atualizar(id, dados))
+    atualizada = ordem_servico_repository.atualizar(id, dados)
+    motivo = limpar(motivo)
+    if motivo:
+        rotulo = "Cancelada" if novo == "CANCELADA" else f"Status alterado para {novo}"
+        apontamento_repository.criar({"os_id": id, "data": dashboard_service.agora(), "tipo": "OBSERVACAO",
+                                      "descricao": f"{rotulo}. Motivo: {motivo}"[:500]})
+    return ordem_servico_service.ordem_completa(atualizada)
 
 
 # POST /api/ordens-servico/{id}/marcar-pronta: o mesmo que mudar o status para PRONTA.

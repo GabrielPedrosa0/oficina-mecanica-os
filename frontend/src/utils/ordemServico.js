@@ -1,45 +1,41 @@
-// Funções de apoio para mostrar uma ordem de serviço.
-// Usadas por CartaoOS, TabelaOS (resumoServico), ItensOS (separarItens) e pelo Detalhe da OS (textoOrcamento).
-import { formatarMoeda, formatarNumeroOS, formatarPlaca } from './formatadores'
+// Regras de exibição da OS usadas em mais de um componente. Integrantes 2 e 3.
+import { formatarMoeda } from './formatadores'
 
-// Texto curto do "Serviço" na lista. A lista do backend ainda não traz os itens,
-// então usamos o problema relatado; se a OS vier com itens, mostra o 1º serviço (+N).
+// Texto da coluna "Serviço": o resumo do painel, o serviço ou o problema relatado.
 export function resumoServico(ordem) {
-  const servicos = (ordem.itens ?? []).filter((i) => i.tipo === 'servico')
-  if (servicos.length > 0) {
-    const resto = servicos.length - 1
-    return resto > 0 ? `${servicos[0].descricao} +${resto}` : servicos[0].descricao
-  }
-  return ordem.servico ?? ordem.problema_relatado ?? ''
+  return ordem.servico_resumo || ordem.servico || ordem.problema_relatado || ''
 }
 
-// Valor de uma linha: quantidade (padrão 1) x valor unitário.
-const valorLinha = (item) => (item.quantidade ?? 1) * (item.valor_unitario ?? 0)
+// Total da OS = soma de quantidade x valor unitário de todos os itens (especificação 3.4).
+export function totalDosItens(itens = []) {
+  return itens.reduce((soma, i) => soma + Number(i.quantidade ?? 1) * Number(i.valor_unitario ?? 0), 0)
+}
 
-// Separa os itens em serviços e peças e calcula os totais de cada grupo.
+// Separa os itens da OS como no Figma: "Serviços" (mão de obra) e "Peças", cada um com o seu subtotal.
 export function separarItens(itens = []) {
   const servicos = itens.filter((i) => i.tipo === 'servico')
-  const pecas = itens.filter((i) => i.tipo === 'peca')
-  const soma = (lista) => lista.reduce((total, item) => total + valorLinha(item), 0)
-  return { servicos, pecas, totalServicos: soma(servicos), totalPecas: soma(pecas) }
+  const pecas = itens.filter((i) => i.tipo !== 'servico')
+  return { servicos, pecas, totalServicos: totalDosItens(servicos), totalPecas: totalDosItens(pecas) }
 }
 
-// Texto do orçamento para conferir, copiar ou mandar pelo WhatsApp.
-// `ordem` vem de GET /api/ordens-servico/{id}; `itens` de listarItens (tipo servico / peca).
-export function textoOrcamento(ordem, itens = []) {
-  const { servicos, pecas, totalServicos, totalPecas } = separarItens(itens)
-  const linha = (item) => `- ${item.descricao}: ${item.quantidade} x ${formatarMoeda(item.valor_unitario)} = ${formatarMoeda(valorLinha(item))}`
-  const bloco = (titulo, lista) => (lista.length > 0 ? [`${titulo}:`, ...lista.map(linha), ''] : [])
+// Peça com estoque no mínimo ou abaixo (Figma "Peças": etiqueta "Estoque baixo").
+export function estoqueBaixo(peca) {
+  return Number(peca.estoque ?? 0) <= Number(peca.estoque_minimo ?? 3)
+}
+
+// Texto do orçamento para mandar pelo WhatsApp do próprio aparelho (Detalhe da OS → Enviar orçamento).
+export function textoOrcamento(os, itens = []) {
+  const linhas = itens.map((i) => {
+    const qtd = Number(i.quantidade) !== 1 ? `${i.quantidade} × ` : ''
+    return `• ${qtd}${i.descricao}: ${formatarMoeda(i.quantidade * i.valor_unitario)}`
+  })
   return [
-    `Olá${ordem.cliente_nome ? `, ${ordem.cliente_nome}` : ''}! Segue o orçamento da ${formatarNumeroOS(ordem.id)}.`,
-    `Veículo: ${ordem.veiculo || '—'} (placa ${formatarPlaca(ordem.placa) || '—'})`,
+    `Olá, ${os.cliente_nome ?? 'cliente'}! Segue o orçamento da OS ${os.id}`,
+    `${os.veiculo} (${os.placa})`,
     '',
-    ...bloco('Serviços', servicos),
-    ...bloco('Peças', pecas),
-    `Serviços: ${formatarMoeda(totalServicos)}`,
-    `Peças: ${formatarMoeda(totalPecas)}`,
-    `Total: ${formatarMoeda(totalServicos + totalPecas)}`,
+    ...(linhas.length ? linhas : ['(sem itens lançados)']),
     '',
-    'Posso iniciar o serviço?',
+    `Total: ${formatarMoeda(itens.length ? totalDosItens(itens) : os.valor_total)}`,
+    ...(os.eh_garantia ? ['Serviço em garantia: não será cobrado.'] : []),
   ].join('\n')
 }

@@ -1,3 +1,7 @@
+// Filtros em pílulas, um ativo por vez (Figma "Filtro, item e dados"). Integrante 6.
+// No celular rolam na horizontal.
+//
+//   <Filtros opcoes={FILTROS_OS} valor={status} onChange={setStatus} rotulo="Filtrar por status" />
 import './ui.css'
 
 export default function Filtros({ opcoes, valor, onChange, rotulo = 'Filtros' }) {

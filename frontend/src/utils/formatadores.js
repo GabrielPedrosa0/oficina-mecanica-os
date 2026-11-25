@@ -1,3 +1,4 @@
+// Formatação para a tela (seção 2.3 da especificação). Integrante 6.
 // Nenhuma função aqui muda o dado: só transforma em texto para mostrar.
 
 const moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })

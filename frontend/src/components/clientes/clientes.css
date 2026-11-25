@@ -1,0 +1,119 @@
+/* Clientes: detalhe (PC e celular) e lista com o detalhe ao lado. Integrante 5. */
+.detalhe-cliente {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-4);
+}
+.detalhe-cliente__topo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+  flex-wrap: wrap;
+}
+.detalhe-cliente__nome {
+  flex: 1;
+  min-width: 0;
+}
+.detalhe-cliente__nome p {
+  margin: 0;
+}
+.detalhe-cliente__acoes {
+  display: flex;
+  gap: var(--espaco-2);
+}
+.detalhe-cliente__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--texto-primario);
+  font-weight: 500;
+}
+.detalhe-cliente__vazio {
+  margin: 0;
+  padding: var(--espaco-4);
+  color: var(--texto-apoio);
+}
+.detalhe-cliente__vazio--sem-borda {
+  padding: 0;
+}
+.detalhe-cliente__lista .linha-veiculo:last-child {
+  border-bottom: 0;
+}
+.detalhe-cliente__historico {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.detalhe-cliente__historico li + li {
+  border-top: 1px solid var(--borda-padrao);
+}
+.detalhe-cliente__os {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+  padding: var(--espaco-3) var(--espaco-4);
+}
+.detalhe-cliente__os:hover {
+  background: var(--fundo-sutil);
+}
+.detalhe-cliente__os-textos {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.detalhe-cliente__os-titulo {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.detalhe-cliente__os-sub {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--texto-apoio);
+}
+.detalhe-cliente__os-valor {
+  min-width: 88px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Lista do PC: clientes à esquerda, o cliente aberto à direita. */
+.clientes__colunas {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: var(--espaco-6);
+  align-items: start;
+}
+.clientes__lista {
+  position: sticky;
+  top: calc(var(--altura-barra-superior) + var(--espaco-4));
+  max-height: calc(100svh - var(--altura-barra-superior) - var(--espaco-8));
+  overflow-y: auto;
+}
+@media (max-width: 899px) {
+  .clientes__colunas {
+    display: block;
+  }
+  .clientes__lista {
+    position: static;
+    max-height: none;
+  }
+  .detalhe-cliente__os-valor {
+    min-width: 0;
+  }
+}
+
+/* Link com cara de botão (WhatsApp abre fora do app). */
+.clientes__whatsapp {
+  flex: 1;
+}
+
+.form-cliente {
+  max-width: 960px;
+}
+
+.clientes__busca {
+  max-width: 480px;
+}

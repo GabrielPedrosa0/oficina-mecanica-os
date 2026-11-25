@@ -1,153 +1,160 @@
-// Tela de login (especificação 3.8): e-mail + senha -> POST /api/auth/login.
-// Deu certo: volta para a página que a pessoa tentou abrir (ou para o início).
-// Também tem o "Esqueci minha senha", que chama POST /api/auth/esqueci-senha.
-import { useState } from 'react'
+// Login e "Esqueci minha senha" (Figma "PC — Login" e "Celular — Login"). Integrante 6.
+// Fora do layout (sem menu). Depois de entrar, volta para a tela que pediu login (ou o Painel).
+import { useEffect, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, LogIn, Mail } from 'lucide-react'
 import Logo from '../../components/layout/Logo'
 import Aviso from '../../components/ui/Aviso'
 import Botao from '../../components/ui/Botao'
 import Campo from '../../components/ui/Campo'
+import Modal from '../../components/ui/Modal'
 import { useAcao } from '../../hooks/useApi'
 import { entrar, esqueciSenha, estaLogado } from '../../services/authService'
+import { validar, validarEmail } from '../../utils/validadores'
 import './login.css'
 
-const EMAIL_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+function EsqueciSenha({ aberto, onFechar, emailInicial }) {
+  const [email, setEmail] = useState(emailInicial)
+  const [erroCampo, setErroCampo] = useState(null)
+  const pedido = useAcao(esqueciSenha)
+  const [resposta, setResposta] = useState(null)
 
-function validar(email, senha, pedirSenha = true) {
-  const erros = {}
-  if (!email.trim()) erros.email = 'Informe o e-mail.'
-  else if (!EMAIL_VALIDO.test(email.trim())) erros.email = 'E-mail inválido.'
-  if (pedirSenha && !senha) erros.senha = 'Informe a senha.'
-  return erros
+  async function enviar(e) {
+    e?.preventDefault()
+    const erro = validarEmail(email)
+    setErroCampo(erro)
+    if (erro) return
+    const r = await pedido.executar(email.trim())
+    if (r) setResposta(r.mensagem)
+  }
+
+  function fechar() {
+    setResposta(null)
+    pedido.limparErro()
+    onFechar()
+  }
+
+  return (
+    <Modal
+      aberto={aberto}
+      onFechar={fechar}
+      titulo="Esqueci minha senha"
+      rodape={
+        resposta ? (
+          <Botao onClick={fechar}>Voltar ao login</Botao>
+        ) : (
+          <>
+            <Botao variante="secundario" onClick={fechar}>
+              Cancelar
+            </Botao>
+            <Botao carregando={pedido.executando} onClick={enviar}>
+              Enviar instruções
+            </Botao>
+          </>
+        )
+      }
+    >
+      {resposta ? (
+        <Aviso tom="sucesso">{resposta}</Aviso>
+      ) : (
+        <form className="pilha" onSubmit={enviar} noValidate>
+          <p className="modal__texto">
+            Informe o e-mail cadastrado. Enviaremos as instruções para criar uma nova senha.
+          </p>
+          {pedido.erro && <Aviso tom="perigo">{pedido.erro.message}</Aviso>}
+          <Campo
+            rotulo="E-mail"
+            tipo="email"
+            autoComplete="username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            erro={erroCampo}
+          />
+        </form>
+      )}
+    </Modal>
+  )
 }
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const local = useLocation()
-  const destino = local.state?.de ?? '/'
-
-  const [modo, setModo] = useState('entrar') // entrar | recuperar
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erros, setErros] = useState({})
-  const [mensagemRecuperacao, setMensagemRecuperacao] = useState('')
-
+  const [esqueci, setEsqueci] = useState(false)
   const login = useAcao(entrar)
-  const recuperacao = useAcao(esqueciSenha)
+  const aviso = location.state?.mensagem
 
-  // Já está logado: não precisa ver o login de novo.
-  if (estaLogado()) return <Navigate to={destino} replace />
+  useEffect(() => {
+    document.title = 'Entrar · Oficina App'
+  }, [])
 
-  async function aoEntrar(e) {
+  const destino = location.state?.de?.pathname ? `${location.state.de.pathname}${location.state.de.search ?? ''}` : '/'
+
+  if (estaLogado() && !login.executando) return <Navigate to={destino} replace />
+
+  async function enviar(e) {
     e.preventDefault()
-    const encontrados = validar(email, senha)
+    const encontrados = validar({ email: validarEmail(email), senha: senha ? null : 'Informe a senha.' })
     setErros(encontrados)
-    if (Object.keys(encontrados).length > 0) return
-    const usuario = await login.executar(email, senha)
-    if (usuario) navigate(destino, { replace: true })
-  }
-
-  async function aoRecuperar(e) {
-    e.preventDefault()
-    const encontrados = validar(email, '', false)
-    setErros(encontrados)
-    if (Object.keys(encontrados).length > 0) return
-    const resposta = await recuperacao.executar(email)
-    if (resposta) setMensagemRecuperacao(resposta.mensagem)
-  }
-
-  function trocarModo(novo) {
-    setModo(novo)
-    setErros({})
-    setMensagemRecuperacao('')
-    login.limparErro()
-    recuperacao.limparErro()
+    if (Object.keys(encontrados).length) return
+    if (await login.executar(email.trim(), senha)) navigate(destino, { replace: true })
   }
 
   return (
     <div className="login">
-      <aside className="login__marca" aria-hidden="true">
+      <aside className="login__marca so-pc">
         <Logo />
-        <div className="login__frase">
-          <p className="login__frase-titulo">Ordens de serviço sem papelada.</p>
-          <p className="login__frase-texto">Clientes, veículos, peças e mecânicos num só lugar.</p>
+        <div>
+          <p className="login__frase">Ordens de serviço, clientes, mecânicos e peças em um só lugar.</p>
+          <p className="login__apoio">
+            Acompanhe cada veículo da entrada à entrega, com tudo o que foi feito registrado.
+          </p>
         </div>
       </aside>
 
-      <main className="login__conteudo">
-        <div className="login__cartao">
-          <div className="login__logo-celular">
+      <main className="login__area">
+        <form className="login__form" onSubmit={enviar} noValidate>
+          <div className="so-celular">
             <Logo claro={false} />
           </div>
+          <div>
+            <h1 className="t-h2">Entrar</h1>
+            <p className="texto-secundario">Use o e-mail e a senha cadastrados pelo gerente.</p>
+          </div>
 
-          {modo === 'entrar' ? (
-            <form onSubmit={aoEntrar} noValidate className="login__form">
-              <header>
-                <h1 className="login__titulo">Entrar</h1>
-                <p className="login__subtitulo">Use o e-mail e a senha da sua conta na oficina.</p>
-              </header>
-
-              {login.erro && <Aviso tom="perigo">{login.erro.message}</Aviso>}
-
-              <Campo
-                rotulo="E-mail"
-                tipo="email"
-                icone={Mail}
-                autoComplete="username"
-                autoFocus
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                erro={erros.email}
-              />
-              <Campo
-                rotulo="Senha"
-                tipo="senha"
-                autoComplete="current-password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                erro={erros.senha}
-              />
-
-              <button type="button" className="login__link" onClick={() => trocarModo('recuperar')}>
-                Esqueci minha senha
-              </button>
-
-              <Botao type="submit" icone={LogIn} larguraTotal tamanho="grande" carregando={login.executando}>
-                Entrar
-              </Botao>
-            </form>
-          ) : (
-            <form onSubmit={aoRecuperar} noValidate className="login__form">
-              <header>
-                <h1 className="login__titulo">Recuperar senha</h1>
-                <p className="login__subtitulo">Informe seu e-mail e enviaremos as instruções.</p>
-              </header>
-
-              {recuperacao.erro && <Aviso tom="perigo">{recuperacao.erro.message}</Aviso>}
-              {mensagemRecuperacao && <Aviso tom="sucesso">{mensagemRecuperacao}</Aviso>}
-
-              <Campo
-                rotulo="E-mail"
-                tipo="email"
-                icone={Mail}
-                autoComplete="username"
-                autoFocus
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                erro={erros.email}
-              />
-
-              <Botao type="submit" larguraTotal tamanho="grande" carregando={recuperacao.executando}>
-                Enviar instruções
-              </Botao>
-              <Botao variante="sutil" icone={ArrowLeft} larguraTotal onClick={() => trocarModo('entrar')}>
-                Voltar para o login
-              </Botao>
-            </form>
+          {aviso && !login.erro && <Aviso tom="atencao">{aviso}</Aviso>}
+          {login.erro && (
+            <Aviso tom="perigo">{login.erro.status === 401 ? 'E-mail ou senha incorretos.' : login.erro.message}</Aviso>
           )}
-        </div>
+
+          <Campo
+            rotulo="E-mail"
+            tipo="email"
+            autoComplete="username"
+            placeholder="voce@oficina.com.br"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            erro={erros.email}
+          />
+          <Campo
+            rotulo="Senha"
+            tipo="senha"
+            autoComplete="current-password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            erro={erros.senha}
+          />
+          <Botao type="submit" larguraTotal carregando={login.executando}>
+            Entrar
+          </Botao>
+          <Botao variante="fantasma" larguraTotal onClick={() => setEsqueci(true)}>
+            Esqueci minha senha
+          </Botao>
+        </form>
       </main>
+
+      <EsqueciSenha key={String(esqueci)} aberto={esqueci} onFechar={() => setEsqueci(false)} emailInicial={email} />
     </div>
   )
 }

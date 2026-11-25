@@ -1,41 +1,59 @@
-// Tela de detalhe do cliente (issue #60): só leitura.
+// Detalhe do cliente no celular (Figma "Celular — Detalhe do cliente"). Integrante 5.
+// No PC o mesmo conteúdo aparece à direita da lista; aqui ganha Editar, WhatsApp e Nova ordem.
 import { useParams } from 'react-router-dom'
-import { Pencil } from 'lucide-react'
+import { ClipboardList, MessageCircle, Pencil } from 'lucide-react'
 import CabecalhoPagina from '../../components/layout/CabecalhoPagina'
+import RodapeAcoes from '../../components/layout/RodapeAcoes'
+import DetalheCliente from '../../components/clientes/DetalheCliente'
 import Botao from '../../components/ui/Botao'
-import Cartao, { Dado, GradeDados } from '../../components/ui/Cartao'
-import { EstadoCarregando, EstadoErro } from '../../components/ui/Estados'
 import { useApi } from '../../hooks/useApi'
 import { consultarCliente } from '../../services/clientesService'
+import { linkWhatsApp } from '../../utils/formatadores'
+import '../../components/clientes/clientes.css'
 
 export default function DetalheClientePage() {
-  const { id } = useParams() // o :id do endereço /clientes/:id
-  const { dados: cliente, carregando, erro, recarregar } = useApi(() => consultarCliente(id), [id])
-
-  if (carregando) return <EstadoCarregando formato="bloco" texto="Carregando cliente..." />
-  if (erro) return <EstadoErro mensagem={erro.message} onTentarDeNovo={recarregar} />
+  const { id } = useParams()
+  // Só para o telefone do WhatsApp; o DetalheCliente busca o resto.
+  const { dados } = useApi(() => consultarCliente(id), [id])
 
   return (
     <>
       <CabecalhoPagina
-        titulo={cliente.nome}
+        titulo={dados?.nome ?? 'Cliente'}
         voltarPara="/clientes"
         acoes={
-          <Botao variante="secundario" icone={Pencil} para={`/clientes/${id}/editar`}>
-            Editar
-          </Botao>
+          <>
+            <Botao variante="secundario" icone={Pencil} para={`/clientes/${id}/editar`}>
+              Editar
+            </Botao>
+            <Botao icone={ClipboardList} para="/ordens/nova">
+              Nova ordem
+            </Botao>
+          </>
+        }
+        acoesCelular={
+          <Botao variante="fantasma" icone={Pencil} aria-label="Editar cliente" para={`/clientes/${id}/editar`} />
         }
       />
       <div className="pagina">
-        <Cartao titulo="Dados do cliente">
-          <GradeDados>
-            <Dado rotulo="Telefone">{cliente.telefone}</Dado>
-            <Dado rotulo="CPF ou CNPJ">{cliente.cpf_cnpj}</Dado>
-            <Dado rotulo="E-mail">{cliente.email}</Dado>
-            <Dado rotulo="Cidade">{cliente.cidade}</Dado>
-          </GradeDados>
-        </Cartao>
+        <DetalheCliente id={id} />
       </div>
+      <RodapeAcoes soCelular>
+        {dados?.telefone && (
+          <a
+            className="botao botao--secundario clientes__whatsapp"
+            href={linkWhatsApp(dados.telefone)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <MessageCircle size={20} aria-hidden="true" />
+            <span>WhatsApp</span>
+          </a>
+        )}
+        <Botao icone={ClipboardList} para="/ordens/nova">
+          Nova ordem
+        </Botao>
+      </RodapeAcoes>
     </>
   )
 }

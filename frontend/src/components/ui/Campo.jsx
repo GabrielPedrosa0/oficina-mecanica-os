@@ -1,3 +1,13 @@
+// Campo de formulário com rótulo sempre visível (Figma "Componentes > Campo"). Integrante 6.
+// Um componente para input, senha (com botão de mostrar), textarea e select.
+//
+//   <Campo rotulo="Placa" value={placa} onChange={(e) => setPlaca(e.target.value)} erro={erros.placa} />
+//   <Campo rotulo="Senha" tipo="senha" autoComplete="current-password" />
+//   <Campo rotulo="Problema relatado" tipo="textarea" maxLength={1000} />
+//   <Campo rotulo="Mecânico" tipo="select" opcional>
+//     <option value="">A definir</option>
+//     <option>Rafael</option>
+//   </Campo>
 import { useId, useState } from 'react'
 import { ChevronDown, Eye, EyeOff } from 'lucide-react'
 import './ui.css'

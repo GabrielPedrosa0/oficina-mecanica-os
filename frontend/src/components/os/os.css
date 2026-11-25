@@ -1,8 +1,9 @@
-/* 
+/* =====================================================================
    Componentes da ordem de serviço (components/os).
-*/
+   CartaoOS e TabelaOS: Integrante 2. ItensOS e Apontamentos: Integrante 3.
+   ===================================================================== */
 
-/* ----- Cartão da OS ----- */
+/* ------------------------------------------------------ Cartão da OS */
 .cartao-os {
   display: flex;
   flex-direction: column;
@@ -62,7 +63,7 @@
   gap: var(--espaco-3);
 }
 
-/* ----- Tabela de OS ----- */
+/* ------------------------------------------------------ Tabela de OS */
 .tabela-os__rolagem {
   overflow-x: auto;
   background: var(--fundo-superficie);
@@ -152,7 +153,7 @@ td.tabela-os__direita {
   color: var(--texto-principal) !important;
 }
 
-/* ----- Itens da OS ----- */
+/* ------------------------------------------------------- Itens da OS */
 .itens-os {
   display: flex;
   flex-direction: column;
@@ -250,7 +251,7 @@ td.tabela-os__direita {
   font: 600 32px/36px var(--fonte-titulo);
 }
 
-/* ----- Apontamentos ----- */
+/* ------------------------------------------------------- Apontamentos */
 .apontamentos__lista {
   list-style: none;
   margin: 0;

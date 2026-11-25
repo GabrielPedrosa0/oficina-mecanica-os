@@ -7,6 +7,7 @@ from fastapi import HTTPException
 
 from repositories import mecanico_repository, ordem_servico_repository
 from schemas.mecanico_schema import Mecanico
+from services import dashboard_service
 
 
 # Confere os campos e devolve os dados prontos para gravar: CPF só com dígitos e
@@ -47,15 +48,49 @@ def validar(entrada: Mecanico, id: int | None = None):
             "hora_inicio_expediente": inicio, "hora_fim_expediente": fim}
 
 
-def listar_mecanicos():
-    return sorted(mecanico_repository.listar(), key=lambda m: m["nome"].lower())
+# Agora, no horário da oficina. Os testes trocam esta função para fixar a hora.
+def agora():
+    return dashboard_service.agora()
+
+
+# {mecanico_id: quantas OS EM_SERVICO ele tem}
+def contar_em_servico():
+    contagem = {}
+    for ordem in ordem_servico_repository.listar_por_status("EM_SERVICO"):
+        if ordem["mecanico_id"] is not None:
+            contagem[ordem["mecanico_id"]] = contagem.get(ordem["mecanico_id"], 0) + 1
+    return contagem
+
+
+def mecanico_completo(mecanico, contagem=None):
+    contagem = contar_em_servico() if contagem is None else contagem
+    return {**mecanico, "os_em_servico": contagem.get(mecanico["id"], 0)}
+
+
+# No expediente agora: o início já passou e o fim ainda não. Sem horário cadastrado, não está.
+def em_expediente(mecanico, momento=None):
+    inicio, fim = mecanico["hora_inicio_expediente"], mecanico["hora_fim_expediente"]
+    if inicio is None or fim is None:
+        return False
+    hora = (momento or agora()).time()
+    return inicio <= hora < fim
+
+
+# GET /api/mecanicos  ·  ?em_expediente=true (só quem está no horário agora)
+def listar_mecanicos(so_em_expediente: bool = False):
+    lista = sorted(mecanico_repository.listar(), key=lambda m: m["nome"].lower())
+    if so_em_expediente:
+        momento = agora()
+        lista = [m for m in lista if em_expediente(m, momento)]
+    contagem = contar_em_servico()
+    return [mecanico_completo(m, contagem) for m in lista]
 
 
 def consultar_mecanico(id: int):
     mecanico = mecanico_repository.buscar(id)
     if mecanico is None:
         raise HTTPException(status_code=404, detail="Mecânico não encontrado.")
-    return mecanico
+    return mecanico_completo(mecanico)
 
 
 def cadastrar_mecanico(entrada: Mecanico):

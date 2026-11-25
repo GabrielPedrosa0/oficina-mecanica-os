@@ -1,5 +1,14 @@
+// Menu lateral escuro do PC (Figma "Barras e menu"). Integrante 6.
+// Só aparece no PC (a partir de 900 px); no celular quem navega é a BarraAbas.
+//
+//   <MenuLateral usuario={{ nome: 'Ana', perfil: 'RECEPCAO' }} nomeOficina="Oficina do Raimundo" />
+//
+// Itens no Figma: Painel, Ordens de serviço, Clientes, Veículos, Mecânicos, Serviços, Peças e Usuários
+// (Usuários só aparece para o Gerente).
 import { NavLink } from 'react-router-dom'
+import { LogOut } from 'lucide-react'
 import Avatar from '../ui/Avatar'
+import Botao from '../ui/Botao'
 import Logo from './Logo'
 import { rotuloPerfil } from '../../constants/perfis'
 import { ITENS_MENU, itensDoPerfil } from './itensMenu'
@@ -24,6 +33,7 @@ export default function MenuLateral({
   usuario = { nome: 'Usuário', perfil: 'RECEPCAO' },
   itens = ITENS_MENU,
   rodape,
+  onSair,
 }) {
   return (
     <aside className="menu-lateral" aria-label="Menu principal">
@@ -46,6 +56,17 @@ export default function MenuLateral({
               <span className="menu-lateral__usuario-nome">{usuario.nome}</span>
               <span className="menu-lateral__usuario-perfil">{rotuloPerfil(usuario.perfil)}</span>
             </span>
+            {onSair && (
+              <Botao
+                variante="fantasma"
+                tamanho="pequeno"
+                icone={LogOut}
+                aria-label="Sair"
+                title="Sair"
+                className="menu-lateral__sair"
+                onClick={onSair}
+              />
+            )}
           </div>
         )}
       </div>

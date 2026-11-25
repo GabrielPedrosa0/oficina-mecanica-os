@@ -29,12 +29,12 @@ def formatar_data(data):
 
 # O texto do CSV com as ordens que passam nos filtros (os mesmos da listagem).
 # Separador ";", valores com vírgula e BOM, para abrir certo no Excel em português.
-def gerar_csv(status=None, placa=None, cliente=None):
+def gerar_csv(status=None, placa=None, cliente=None, garantia=None):
     saida = io.StringIO()
     escritor = csv.writer(saida, delimiter=";", lineterminator="\r\n")
     escritor.writerow(["OS", "Placa", "Veículo", "Cliente", "Serviço", "Problema relatado", "Mecânico",
                        "Status", "Abertura", "Previsão", "Conclusão", "Valor total (R$)"])
-    for o in ordem_servico_service.listar_ordens(status, placa, cliente):
+    for o in ordem_servico_service.listar_ordens(status, placa, cliente, garantia):
         escritor.writerow([celula_csv(valor) for valor in [
             o["id"], o["placa"] or "", o["veiculo"], o["cliente_nome"] or "", o["servico"] or "",
             o["problema_relatado"], o["mecanico"] or "", STATUS_ROTULO[o["status"]],

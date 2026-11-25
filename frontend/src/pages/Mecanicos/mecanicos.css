@@ -1,0 +1,23 @@
+/* Mecânicos: lista e formulário. Integrante 1. */
+.mecanicos__ajuda {
+  margin: 0;
+}
+.mecanicos__pessoa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  font-weight: 500;
+}
+.form-mecanico {
+  max-width: 720px;
+}
+.form-mecanico__expediente {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espaco-3);
+}
+.form-mecanico__expediente-titulo {
+  margin: 0 0 calc(-1 * var(--espaco-2));
+  font: 500 13px/16px var(--fonte-texto);
+  color: var(--texto-secundario);
+}

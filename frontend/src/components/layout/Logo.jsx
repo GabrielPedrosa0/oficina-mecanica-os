@@ -1,5 +1,5 @@
-// Marca provisória: chave inglesa num quadrado laranja + nome da oficina.
-// O nome provisorio "Sua Oficina".
+// Marca provisória: chave inglesa num quadrado laranja + nome da oficina. Integrante 6.
+// O nome vem de configuracao_oficina.nome_fantasia quando existir; até lá, "Sua Oficina".
 import { Wrench } from 'lucide-react'
 import './layout.css'
 

@@ -1,3 +1,11 @@
+// Botão do app (Figma "Componentes > Botão"). Integrante 6.
+// Grande (48 px) no celular e Médio (40 px) no PC, automaticamente. Um único Primário por tela.
+//
+//   <Botao icone={Plus}>Nova ordem</Botao>
+//   <Botao variante="secundario" icone={Send} onClick={enviar}>Enviar orçamento</Botao>
+//   <Botao variante="perigo" carregando={excluindo}>Excluir</Botao>
+//   <Botao para="/ordens/nova" icone={Plus}>Nova ordem</Botao>          (vira um link)
+//   <Botao variante="fantasma" icone={X} aria-label="Fechar" />          (só ícone: aria-label obrigatório)
 import { Link } from 'react-router-dom'
 import { LoaderCircle } from 'lucide-react'
 import './ui.css'

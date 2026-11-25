@@ -1,8 +1,14 @@
+/* =====================================================================
+   Componentes de interface (components/ui). Integrante 6.
+   Só usa variáveis do styles/tokens.css: nada de cor solta aqui.
+   Padrão de nomes: .bloco, .bloco__parte, .bloco--variacao
+   ===================================================================== */
+
 .girando {
   animation: girar 0.8s linear infinite;
 }
 
-/* ----- Botão ----- */
+/* ---------------------------------------------------------------- Botão */
 .botao {
   --altura: var(--altura-controle);
   display: inline-flex;
@@ -96,7 +102,7 @@
   cursor: progress;
 }
 
-/* ----- Campo ----- */
+/* ---------------------------------------------------------------- Campo */
 .campo {
   display: flex;
   flex-direction: column;
@@ -217,7 +223,7 @@ select.campo__controle {
   margin-left: auto;
 }
 
-/* ----- Selo ----- */
+/* ----------------------------------------------------------------- Selo */
 .selo {
   display: inline-flex;
   align-items: center;
@@ -257,7 +263,7 @@ select.campo__controle {
   color: var(--texto-primario);
 }
 
-/* ----- Placa ----- */
+/* ---------------------------------------------------------------- Placa */
 .placa {
   display: inline-flex;
   align-items: center;
@@ -293,7 +299,7 @@ select.campo__controle {
   color: var(--texto-apoio);
 }
 
-/* ----- Avatar ----- */
+/* --------------------------------------------------------------- Avatar */
 .avatar {
   display: inline-grid;
   place-items: center;
@@ -306,7 +312,7 @@ select.campo__controle {
   letter-spacing: 0.02em;
 }
 
-/* ----- Indicador ----- */
+/* ------------------------------------------------------------ Indicador */
 .indicador {
   display: flex;
   flex-direction: column;
@@ -364,7 +370,7 @@ select.campo__controle {
   font-weight: 500;
 }
 
-/* ----- Filtros ----- */
+/* -------------------------------------------------------------- Filtros */
 .filtros {
   display: flex;
   gap: var(--espaco-2);
@@ -410,7 +416,7 @@ select.campo__controle {
   color: var(--texto-primario);
 }
 
-/* ----- Cartão e Dado ----- */
+/* --------------------------------------------------------- Cartão e Dado */
 .cartao {
   background: var(--fundo-superficie);
   border: 1px solid var(--borda-padrao);
@@ -472,7 +478,7 @@ select.campo__controle {
   overflow-wrap: anywhere;
 }
 
-/* ----- Item lista ----- */
+/* ----------------------------------------------------------- Item lista */
 .item-lista {
   display: flex;
   align-items: center;
@@ -534,7 +540,7 @@ select.campo__controle {
   flex-shrink: 0;
 }
 
-/* ----- Estados ----- */
+/* -------------------------------------------------------------- Estados */
 .estado {
   display: flex;
   flex-direction: column;
@@ -577,92 +583,6 @@ select.campo__controle {
   color: var(--texto-secundario);
 }
 
-/* Esqueletos do EstadoCarregando: imitam o formato do conteúdo final. */
-.esqueleto--circulo {
-  border-radius: var(--raio-total);
-  flex-shrink: 0;
-}
-.esqueleto--pilula {
-  border-radius: var(--raio-total);
-}
-.carregando .esqueleto {
-  display: block;
-  max-width: 100%;
-}
-.carregando__linha-entre {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--espaco-3);
-}
-.carregando-lista {
-  overflow: hidden;
-  background: var(--fundo-superficie);
-  border: 1px solid var(--borda-padrao);
-  border-radius: var(--raio-g);
-  box-shadow: var(--sombra-cartao);
-}
-.carregando-lista__item {
-  display: flex;
-  align-items: center;
-  gap: var(--espaco-3);
-  min-height: 64px;
-  padding: var(--espaco-3) var(--espaco-4);
-  border-bottom: 1px solid var(--borda-padrao);
-}
-.carregando-lista__item:last-child {
-  border-bottom: 0;
-}
-.carregando-lista__textos {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: var(--espaco-2);
-  min-width: 0;
-}
-.carregando-cartoes {
-  display: flex;
-  flex-direction: column;
-  gap: var(--espaco-3);
-}
-.carregando-cartao {
-  display: flex;
-  flex-direction: column;
-  gap: var(--espaco-2);
-  padding: var(--espaco-4);
-  background: var(--fundo-superficie);
-  border: 1px solid var(--borda-padrao);
-  border-radius: var(--raio-g);
-  box-shadow: var(--sombra-cartao);
-}
-.carregando-tabela {
-  overflow: hidden;
-  background: var(--fundo-superficie);
-  border: 1px solid var(--borda-padrao);
-  border-radius: var(--raio-g);
-  box-shadow: var(--sombra-cartao);
-}
-.carregando-tabela__cabecalho,
-.carregando-tabela__linha {
-  display: grid;
-  align-items: center;
-  gap: var(--espaco-3);
-  padding: 0 var(--espaco-4);
-}
-.carregando-tabela__cabecalho {
-  height: 44px;
-  background: var(--fundo-sutil);
-}
-.carregando-tabela__linha {
-  height: 56px;
-  border-top: 1px solid var(--borda-padrao);
-}
-.carregando-bloco {
-  display: flex;
-  flex-direction: column;
-  gap: var(--espaco-3);
-}
-
 .em-construcao {
   display: flex;
   flex-direction: column;
@@ -677,7 +597,7 @@ select.campo__controle {
   color: var(--texto-apoio);
 }
 
-/* ----- Aviso ----- */
+/* ---------------------------------------------------------------- Aviso */
 .aviso {
   display: flex;
   align-items: flex-start;
@@ -734,7 +654,7 @@ select.campo__controle {
   cursor: pointer;
 }
 
-/* ----- Modal ----- */
+/* ---------------------------------------------------------------- Modal */
 .modal {
   width: min(var(--largura-modal, 480px), calc(100vw - 32px));
   max-height: calc(100svh - 64px);
@@ -795,7 +715,7 @@ select.campo__controle {
   }
 }
 
-/* ----- Barra busca ----- */
+/* ---------------------------------------------------------- Barra busca */
 .barra-busca {
   position: relative;
   display: flex;
@@ -844,7 +764,7 @@ select.campo__controle {
   cursor: pointer;
 }
 
-/* ----- Etiqueta ----- */
+/* -------------------------------------------------------------- Etiqueta */
 .etiqueta {
   display: inline-flex;
   align-items: center;
@@ -864,7 +784,7 @@ select.campo__controle {
   color: var(--status-atencao-texto);
 }
 
-/* ----- Interruptor ----- */
+/* ----------------------------------------------------------- Interruptor */
 .interruptor {
   display: flex;
   align-items: center;
@@ -921,7 +841,7 @@ select.campo__controle {
   cursor: not-allowed;
 }
 
-/* ----- Abas ----- */
+/* ------------------------------------------------------------------ Abas */
 .abas {
   display: flex;
   gap: 4px;
@@ -954,7 +874,7 @@ select.campo__controle {
   font-weight: 600;
 }
 
-/* ----- Tabela ----- */
+/* ---------------------------------------------------------------- Tabela */
 .tabela__rolagem {
   overflow-x: auto;
   background: var(--fundo-superficie);
@@ -1024,7 +944,7 @@ th.tabela__direita .tabela__ordenar {
   justify-content: flex-end;
 }
 
-/* ----- Grupo campos ----- */
+/* ---------------------------------------------------------- Grupo campos */
 .grupo-campos {
   margin: 0;
   padding: 0;

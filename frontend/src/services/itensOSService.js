@@ -1,26 +1,50 @@
-// Itens da OS (serviços e peças) e o catálogo de onde eles vêm.
-// Rotas em backend/routers/itens_os.py (itens da OS) e backend/routers/itens.py (catálogo).
+// Itens da OS: serviços (mão de obra) e peças (guia 3.3). Integrante 3.
+// Rotas em backend/routers/itens_os.py.
+//
+// No backend, todo item da OS aponta para um item do catálogo (tabela item) pelo `item_id`.
+// As telas trabalham com { tipo: 'servico' | 'peca', servico_id, peca_id }; este service
+// traduz nos dois sentidos, então as telas não precisam saber do `item_id`.
+// Serviço ou peça digitado à mão (fora do catálogo) usa o item genérico do sistema:
+// 1 = "Peça" e 2 = "Serviço" (banco/modelo_logico_oficina.sql).
 import { apiDelete, apiGet, apiPost, apiPut } from './api'
 
-// O backend manda o tipo como PECA / SERVICO; os componentes (ItensOS, separarItens) usam peca / servico.
-const TIPO_DA_TELA = { PECA: 'peca', SERVICO: 'servico' }
-const paraATela = (item) => ({ ...item, tipo: TIPO_DA_TELA[item.tipo] ?? item.tipo })
+const PECA_GENERICA = 1
+const SERVICO_GENERICO = 2
+
+// Item como vem do backend -> item como as telas usam.
+function paraTela(item) {
+  if (!item) return item
+  const tipo = String(item.tipo ?? '').toLowerCase() === 'peca' ? 'peca' : 'servico'
+  const generico = item.item_id === PECA_GENERICA || item.item_id === SERVICO_GENERICO
+  return {
+    ...item,
+    tipo,
+    peca_id: tipo === 'peca' && !generico ? item.item_id : null,
+    servico_id: tipo === 'servico' && !generico ? item.item_id : null,
+  }
+}
+
+// { tipo, descricao, quantidade, valor_unitario, peca_id, servico_id } -> corpo do backend.
+function paraApi(dados) {
+  const catalogo = dados.tipo === 'peca' ? dados.peca_id : dados.servico_id
+  return {
+    item_id: catalogo ?? (dados.tipo === 'peca' ? PECA_GENERICA : SERVICO_GENERICO),
+    descricao: dados.descricao,
+    quantidade: dados.quantidade,
+    valor_unitario: dados.valor_unitario,
+  }
+}
 
 // GET /api/ordens-servico/1042/itens
-//   -> [{ id, item_id, descricao, quantidade, valor_unitario, tipo, codigo, tempo_estimado_min }]
-export const listarItens = async (osId) => (await apiGet(`/ordens-servico/${osId}/itens`)).map(paraATela)
+export const listarItens = async (osId) => (await apiGet(`/ordens-servico/${osId}/itens`)).map(paraTela)
 
-// POST /api/ordens-servico/1042/itens  { item_id, descricao, quantidade, valor_unitario }
-export const adicionarItem = async (osId, dados) => paraATela(await apiPost(`/ordens-servico/${osId}/itens`, dados))
+// POST /api/ordens-servico/1042/itens
+export const adicionarItem = async (osId, dados) =>
+  paraTela(await apiPost(`/ordens-servico/${osId}/itens`, paraApi(dados)))
 
-// PUT /api/ordens-servico/1042/itens/3  (mesmo corpo do POST)
-export const atualizarItem = async (osId, itemOsId, dados) =>
-  paraATela(await apiPut(`/ordens-servico/${osId}/itens/${itemOsId}`, dados))
+// PUT /api/ordens-servico/1042/itens/7
+export const atualizarItem = async (osId, itemId, dados) =>
+  paraTela(await apiPut(`/ordens-servico/${osId}/itens/${itemId}`, paraApi(dados)))
 
-// DELETE /api/ordens-servico/1042/itens/3
-export const removerItem = (osId, itemOsId) => apiDelete(`/ordens-servico/${osId}/itens/${itemOsId}`)
-
-// ---- Catálogo (GET /api/itens?tipo=SERVICO|PECA) ----
-// -> [{ id, tipo, descricao, codigo, preco, qtd_estoque, tempo_estimado_min }]
-export const listarServicosCatalogo = () => apiGet('/itens', { tipo: 'SERVICO' })
-export const listarPecas = () => apiGet('/itens', { tipo: 'PECA' })
+// DELETE /api/ordens-servico/1042/itens/7
+export const removerItem = (osId, itemId) => apiDelete(`/ordens-servico/${osId}/itens/${itemId}`)

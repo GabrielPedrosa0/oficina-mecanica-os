@@ -1,44 +1,23 @@
-/* Painel / Início */
-.painel__indicadores {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--espaco-4);
+/* Painel (PC) e Início (celular). Integrante 4.
+   Quase tudo vem dos componentes; aqui ficam só os ajustes desta tela. */
+.painel {
+  gap: var(--espaco-8);
 }
-
-.painel__secao-topo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--espaco-3);
-  margin-bottom: var(--espaco-3);
-}
-.painel__secao-titulo {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--espaco-2);
-  margin: 0;
-  font: 600 22px/28px var(--fonte-titulo);
-  color: var(--texto-principal);
-}
-.painel__contagem {
-  min-width: 24px;
-  padding: 2px var(--espaco-2);
-  border-radius: var(--raio-total);
-  background: var(--fundo-primario-sutil);
-  color: var(--texto-primario);
-  font: 600 13px/20px var(--fonte-texto);
-  text-align: center;
-}
-
-.painel__cartoes {
-  display: grid;
-  gap: var(--espaco-3);
-  margin-bottom: var(--espaco-3);
-}
-
 @media (max-width: 899px) {
-  .painel__indicadores {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--espaco-3);
+  .painel {
+    gap: var(--espaco-6);
+  }
+}
+
+/* PC largo: ordens recentes à esquerda, mecânicos em expediente à direita. */
+.painel__colunas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: inherit;
+  align-items: start;
+}
+@media (min-width: 1280px) {
+  .painel__colunas {
+    grid-template-columns: minmax(0, 1fr) 340px;
   }
 }

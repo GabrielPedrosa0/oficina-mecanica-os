@@ -1,3 +1,15 @@
+// Tabela genérica do PC (Figma: Veículos, Mecânicos, Serviços, Peças, Usuários). Integrante 6.
+// Para ordens de serviço use a TabelaOS, que já sabe as colunas da OS.
+//
+//   const colunas = [
+//     { chave: 'placa', rotulo: 'Placa', render: (v) => <Placa placa={v.placa} /> },
+//     { chave: 'modelo', rotulo: 'Modelo' },
+//     { chave: 'quilometragem', rotulo: 'Km atual', render: (v) => formatarKm(v.quilometragem), direita: true },
+//   ]
+//   <Tabela colunas={colunas} linhas={veiculos} onClicarLinha={(v) => navigate(`/veiculos/${v.id}`)} />
+//
+// Coluna: chave (campo do objeto), rotulo, render(linha) opcional, direita (alinha à direita),
+// ordenavel (padrão: true) e valorOrdem(linha) para ordenar por outro valor.
 import { useMemo, useState } from 'react'
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import './ui.css'

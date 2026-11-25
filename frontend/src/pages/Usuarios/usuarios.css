@@ -1,0 +1,13 @@
+/* Usuários. Integrante 6. */
+.usuarios__ajuda {
+  margin: 0;
+}
+.usuarios__pessoa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  font-weight: 500;
+}
+.usuarios__excluir {
+  margin-right: auto;
+}

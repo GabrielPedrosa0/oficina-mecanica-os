@@ -1,3 +1,11 @@
+// Linha de veículo das listas do celular (Figma "Modelo conceitual > Linha de veículo"). Integrante 1.
+// Placa à esquerda; modelo e ano; dono e quilometragem; seta.
+//
+//   <Cartao semEspaco>
+//     {veiculos.map((v) => <LinhaVeiculo key={v.id} veiculo={v} para={`/veiculos/${v.id}`} />)}
+//   </Cartao>
+//
+// O veículo pode trazer `cliente_nome` (ou `cliente.nome`) e `status_os_aberta` para mostrar o selo.
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import Placa from '../ui/Placa'

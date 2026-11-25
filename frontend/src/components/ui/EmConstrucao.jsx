@@ -1,4 +1,7 @@
-// Lugar reservado para uma tela que ainda não foi feita.
+// Lugar reservado para uma tela que ainda não foi feita. Integrante 6.
+// Cada integrante troca o <EmConstrucao> da sua página pelo conteúdo real.
+//
+//   <EmConstrucao titulo="Clientes" responsavel="Integrante 5" />
 import { HardHat } from 'lucide-react'
 import './ui.css'
 

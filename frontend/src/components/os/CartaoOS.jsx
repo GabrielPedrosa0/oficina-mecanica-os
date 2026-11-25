@@ -1,3 +1,7 @@
+// Cartão de ordem de serviço do celular (Figma "Cartão de ordem de serviço"). Integrante 2.
+// Recebe a OS como o backend devolve (GET /api/ordens-servico ou /api/dashboard/*).
+//
+//   {ordens.map((os) => <CartaoOS key={os.id} ordem={os} />)}
 import { Link } from 'react-router-dom'
 import { Clock } from 'lucide-react'
 import Placa from '../ui/Placa'

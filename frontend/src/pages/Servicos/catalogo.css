@@ -1,0 +1,70 @@
+/* Serviços e Peças (no celular é uma tela só, "Serviços e peças", com abas). Integrante 4. */
+.catalogo__ajuda {
+  margin: 0;
+}
+.catalogo__barra {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+.catalogo__busca {
+  max-width: 480px;
+}
+.catalogo__codigo {
+  font: 400 13px/18px var(--fonte-mono);
+  color: var(--texto-secundario);
+}
+.catalogo__descricao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  flex-wrap: wrap;
+}
+.catalogo__linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-3);
+  width: 100%;
+  min-height: 64px;
+  padding: var(--espaco-3) var(--espaco-4);
+  border: 0;
+  border-bottom: 1px solid var(--borda-padrao);
+  background: var(--fundo-superficie);
+  text-align: left;
+  cursor: pointer;
+}
+.catalogo__linha:last-child {
+  border-bottom: 0;
+}
+.catalogo__linha:hover {
+  background: var(--fundo-sutil);
+}
+.catalogo__linha-textos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.catalogo__linha-titulo {
+  font-weight: 500;
+}
+.catalogo__linha-sub {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--texto-apoio);
+}
+.catalogo__linha-sub--alerta {
+  color: var(--status-atencao-texto);
+}
+.catalogo__preco {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.catalogo__duas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espaco-3);
+}
+.catalogo__excluir {
+  margin-right: auto;
+}

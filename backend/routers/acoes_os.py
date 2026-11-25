@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/ordens-servico", tags=["Ações da OS"])
 # Só aceita as transições permitidas (409 nas demais).
 @router.patch("/{id:int}/status")
 def alterar_status(id: int, entrada: AlterarStatus):
-    return acao_os_service.mudar_status(id, entrada.status)
+    return acao_os_service.mudar_status(id, entrada.status, entrada.motivo)
 
 
 # POST /api/ordens-servico/1042/enviar-orcamento

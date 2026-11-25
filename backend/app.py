@@ -3,8 +3,8 @@ from fastapi import FastAPI
 
 from database import erros
 from routers import (
-    acoes_os, apontamentos, autenticacao, busca, clientes, dashboard, exportacao, itens, itens_os,
-    mecanicos, ordens_servico, veiculos,
+    acoes_os, agenda, apontamentos, autenticacao, busca, clientes, dashboard, exportacao, itens, itens_os,
+    mecanicos, ordens_servico, pecas, servicos, usuarios, veiculos,
 )
 
 # A documentação fica em /api/docs, assim toda a aplicação mora em /api.
@@ -23,3 +23,7 @@ app.include_router(veiculos.router)
 app.include_router(dashboard.router)
 app.include_router(mecanicos.router)
 app.include_router(itens.router)
+app.include_router(agenda.router)
+app.include_router(servicos.router)
+app.include_router(pecas.router)
+app.include_router(usuarios.router)

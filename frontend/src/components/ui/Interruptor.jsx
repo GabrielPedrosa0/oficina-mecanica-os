@@ -1,3 +1,9 @@
+// Interruptor liga/desliga com rótulo e ajuda (Figma "Modelo conceitual > Interruptor"). Integrante 6.
+// Use para escolhas de sim/não que valem na hora, como "Serviço em garantia" na Nova OS.
+//
+//   const [garantia, setGarantia] = useState(false)
+//   <Interruptor rotulo="Serviço em garantia" ajuda="Retorno de serviço já feito; não é cobrado"
+//                ligado={garantia} onChange={setGarantia} />
 import { useId } from 'react'
 import './ui.css'
 

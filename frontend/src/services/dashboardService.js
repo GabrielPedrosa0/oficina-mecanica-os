@@ -1,12 +1,14 @@
-// Chamadas do Painel (PC) / Início (celular). Ver backend/routers/dashboard.py.
+// Painel / Início (guia 3.4). Integrante 4. Rotas em backend/routers/dashboard.py.
 import { apiGet } from './api'
 
-// Os quatro indicadores do topo. faturamento_mes vem null para quem não é Gerente.
+// GET /api/dashboard/resumo
+// { em_servico, em_servico_previsao_hoje, aguardando_peca, aguardando_peca_atrasadas,
+//   prontas, faturamento_mes (null se não for Gerente), mes_referencia, gerado_em }
 export const obterResumo = () => apiGet('/dashboard/resumo')
 
-// OS abertas com previsão para hoje, paginadas ({ itens, total, tem_mais, mensagem_vazia }).
+// GET /api/dashboard/entregas-hoje?limite=20&offset=0  -> { itens, total, tem_mais, mensagem_vazia, ... }
 export const listarEntregasHoje = ({ limite = 20, offset = 0 } = {}) =>
   apiGet('/dashboard/entregas-hoje', { limite, offset })
 
-// As OS abertas mais recentes ({ itens, total }).
-export const listarOrdensRecentes = (limite = 10) => apiGet('/dashboard/ordens-recentes', { limite })
+// GET /api/dashboard/ordens-recentes?limite=10  -> { total, itens }
+export const listarOrdensRecentes = ({ limite = 10 } = {}) => apiGet('/dashboard/ordens-recentes', { limite })

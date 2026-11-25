@@ -1,3 +1,5 @@
+// Placa do veículo em fonte mono, com borda (Figma "Placa e avatar"). Integrante 6.
+//   <Placa placa="QRS4F21" />            <Placa placa="qrs-4f21" tamanho="pequena" />
 import { formatarPlaca } from '../../utils/formatadores'
 import './ui.css'
 

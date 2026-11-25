@@ -123,3 +123,13 @@ def listar_ordens_recentes(limite: int = LIMITE_RECENTES):
     abertas.sort(key=lambda o: (o["data_abertura"], o["id"]), reverse=True)
     itens = [ordem_do_painel(o) for o in abertas[:limite]]
     return {"total": len(itens), "itens": itens}
+
+# GET /api/agenda: as OS (menos as canceladas) com previsão de entrega num dia, da mais cedo
+# para a mais tarde. Sem dia, vale hoje (no horário da oficina).
+def listar_agenda(dia=None):
+    inicio = datetime.combine(dia, datetime.min.time()) if dia else limites_do_dia(agora())[0]
+    fim = inicio + timedelta(days=1)
+    previstas = [o for o in ordem_servico_repository.listar()
+                 if o["status"] != "CANCELADA" and esta_entre(o["data_previsao"], inicio, fim)]
+    previstas.sort(key=lambda o: (o["data_previsao"], o["id"]))
+    return {"data": inicio.date(), "total": len(previstas), "itens": [ordem_do_painel(o) for o in previstas]}

@@ -1,3 +1,9 @@
+// Serviços e peças da OS, cada grupo com o seu “+ Adicionar”, e os totais (Figma "Detalhe da OS"). Integrante 3.
+// Item: { id, tipo: 'servico' | 'peca', descricao, codigo, quantidade, valor_unitario, tempo_estimado_min }
+// Total = soma de quantidade × valor (especificação 3.4); passe `total` se o backend já mandar.
+//
+//   <ItensOS itens={itens} onAdicionar={(tipo) => abrirModal(tipo)} onEditar={editar} onRemover={remover} />
+//   <ItensOS itens={itens} somenteLeitura />            (OS entregue ou cancelada)
 import { Pencil, Trash2 } from 'lucide-react'
 import Botao from '../ui/Botao'
 import { formatarDuracao, formatarMoeda } from '../../utils/formatadores'

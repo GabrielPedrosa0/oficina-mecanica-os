@@ -73,3 +73,14 @@ export function useAcao(funcao) {
 
   return { executar, executando, erro, limparErro }
 }
+
+// Para usar com useAcao em rotas que respondem 204 sem corpo (DELETE): devolve true quando deu certo,
+// já que o useAcao devolve null tanto no erro quanto numa resposta vazia.
+//   const apagar = useAcao(excluindo(excluirCliente))
+//   if (await apagar.executar(id)) navigate('/clientes')
+export const excluindo =
+  (funcao) =>
+  async (...argumentos) => {
+    await funcao(...argumentos)
+    return true
+  }

@@ -9,8 +9,9 @@ router = APIRouter(prefix="/api/ordens-servico", tags=["Ordens de serviço"])
 # GET /api/ordens-servico
 # Filtros: ?status=EM_SERVICO  ?placa=QRS4F21  ?cliente=Marina (podem ser combinados)
 @router.get("")
-def listar_ordens(status: Status | None = None, placa: str | None = None, cliente: str | None = None):
-    return ordem_servico_service.listar_ordens(status, placa, cliente)
+def listar_ordens(status: Status | None = None, placa: str | None = None, cliente: str | None = None,
+                  garantia: bool | None = None):
+    return ordem_servico_service.listar_ordens(status, placa, cliente, garantia)
 
 
 # GET /api/ordens-servico/1042

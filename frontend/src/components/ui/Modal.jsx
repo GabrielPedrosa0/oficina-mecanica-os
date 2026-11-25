@@ -1,3 +1,13 @@
+// Janela sobre a tela (usa o <dialog> do navegador: Esc fecha e o foco fica preso dentro).
+// No celular aparece de baixo para cima. Integrante 6.
+//
+//   <Modal aberto={aberto} onFechar={() => setAberto(false)} titulo="Adicionar item"
+//          rodape={<Botao onClick={salvar}>Salvar</Botao>}>
+//     ...campos...
+//   </Modal>
+//
+//   <ModalConfirmacao aberto={sair} titulo="Sair sem salvar?" texto="As alterações serão perdidas."
+//                     rotuloConfirmar="Sair" perigo onConfirmar={fechar} onCancelar={() => setSair(false)} />
 import { useEffect, useId, useRef } from 'react'
 import { X } from 'lucide-react'
 import Botao from './Botao'

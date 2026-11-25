@@ -1,4 +1,10 @@
-/* ------- Logo ------- */
+/* =====================================================================
+   Layout: menu lateral (PC), barra superior (PC), abas (celular),
+   cabeçalho de página e rodapé de ações. Integrante 6.
+   Corte PC × celular: 900 px (o mesmo do tokens.css).
+   ===================================================================== */
+
+/* ---------------------------------------------------------------- Logo */
 .logo {
   display: inline-flex;
   align-items: center;
@@ -26,7 +32,7 @@
   color: var(--texto-invertido);
 }
 
-/* ------- Layout ------- */
+/* -------------------------------------------------------------- Layout */
 .layout {
   display: grid;
   grid-template-columns: var(--largura-menu) minmax(0, 1fr);
@@ -42,7 +48,7 @@
   min-width: 0;
 }
 
-/* ------- Menu lateral ------- */
+/* -------------------------------------------------------- Menu lateral */
 .menu-lateral {
   position: sticky;
   top: 0;
@@ -137,7 +143,7 @@
   color: var(--texto-invertido-apoio);
 }
 
-/* ------- Barra superior ------- */
+/* ------------------------------------------------------ Barra superior */
 .barra-superior {
   position: sticky;
   top: 0;
@@ -157,7 +163,7 @@
   gap: var(--espaco-2);
 }
 
-/* ------- Cabeçalho página ------- */
+/* ---------------------------------------------------- Cabeçalho página */
 .cabecalho-pagina {
   padding: var(--espaco-8) var(--margem-pagina) 0;
 }
@@ -189,21 +195,21 @@
   margin-left: calc(var(--espaco-2) * -1);
 }
 
-/* ------- Rodapé ações ------- */
+/* ------------------------------------------------------ Rodapé ações */
 .rodape-acoes {
   display: flex;
   justify-content: flex-end;
   gap: var(--espaco-3);
 }
 
-/* ------- Barra abas ------- */
+/* ---------------------------------------------------------- Barra abas */
 .barra-abas {
   display: none;
 }
 
-/* 
+/* =====================================================================
    Celular (até 899 px)
-*/
+   ===================================================================== */
 @media (max-width: 899px) {
   .layout {
     display: block;
@@ -284,4 +290,90 @@
   .aba--ativa .aba__rotulo {
     font-weight: 600;
   }
+}
+
+/* Botão Sair ao lado do usuário no menu lateral. */
+.menu-lateral__usuario .menu-lateral__sair {
+  margin-left: auto;
+  color: var(--texto-invertido-apoio);
+}
+.menu-lateral__usuario .menu-lateral__sair:hover {
+  color: var(--texto-invertido);
+  background: var(--fundo-invertido-ativo);
+}
+
+/* ---------------------------------------------------------------------
+   Busca geral do topo (PC): resultados agrupados abaixo do campo.
+   --------------------------------------------------------------------- */
+.busca-geral {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+}
+.busca-geral__painel {
+  position: absolute;
+  top: calc(100% + var(--espaco-1));
+  left: 0;
+  right: 0;
+  z-index: 30;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  padding: var(--espaco-2) 0;
+  background: var(--fundo-superficie);
+  border: 1px solid var(--borda-padrao);
+  border-radius: var(--raio-g);
+  box-shadow: var(--sombra-flutuante);
+}
+.busca-geral__grupo {
+  margin: 0;
+  padding: var(--espaco-2) var(--espaco-4) var(--espaco-1);
+  font: 500 12px/16px var(--fonte-texto);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--texto-apoio);
+}
+.busca-geral__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.busca-geral__item {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+  width: 100%;
+  padding: var(--espaco-2) var(--espaco-4);
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.busca-geral__item:hover,
+.busca-geral__item--ativo {
+  background: var(--fundo-sutil);
+}
+.busca-geral__textos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.busca-geral__titulo {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.busca-geral__sub {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--texto-apoio);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.busca-geral__estado {
+  margin: 0;
+  padding: var(--espaco-3) var(--espaco-4);
+  color: var(--texto-secundario);
 }

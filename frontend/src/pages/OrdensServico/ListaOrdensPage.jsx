@@ -1,7 +1,7 @@
-// Tela "Ordens de serviço" (issue #43, especificação 3.3).
-// PC: tabela + filtros (com Garantia). Celular: cartões + busca + filtros menores.
+// Ordens de serviço (Figma "PC — Ordens de serviço" e "Celular — Ordens de serviço"). Integrante 2.
+// O filtro fica na URL (/ordens?status=PRONTA), assim o Painel abre a lista já filtrada.
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { Download, Plus } from 'lucide-react'
 import CabecalhoPagina from '../../components/layout/CabecalhoPagina'
 import RodapeAcoes from '../../components/layout/RodapeAcoes'
@@ -12,16 +12,17 @@ import { EstadoCarregando, EstadoErro, EstadoVazio } from '../../components/ui/E
 import Filtros from '../../components/ui/Filtros'
 import CartaoOS from '../../components/os/CartaoOS'
 import TabelaOS from '../../components/os/TabelaOS'
-import { FILTROS_OS_CELULAR, FILTROS_OS_PC, statusEncerrado } from '../../constants/statusOS'
+import { FILTRO_GARANTIA, FILTROS_OS_CELULAR, FILTROS_OS_PC, statusEncerrado } from '../../constants/statusOS'
 import { useAcao, useApi } from '../../hooks/useApi'
 import { useDebounce } from '../../hooks/useDebounce'
 import { pesquisar } from '../../services/buscaService'
-import { listarMecanicos } from '../../services/mecanicosService'
 import { exportarOrdensCSV, listarOrdens } from '../../services/ordensServicoService'
+import './ordens.css'
 
 const TRINTA_DIAS = 30 * 86_400_000
 
-// Previsão mais próxima primeiro; sem previsão por último. Entregues e canceladas vão para o fim.
+// Previsão mais próxima primeiro; sem previsão depois, da mais nova para a mais antiga.
+// Entregues e canceladas vão para o fim da lista.
 function ordenar(lista) {
   const encerrada = (o) => (statusEncerrado(o.status) ? 1 : 0)
   return [...lista].sort((a, b) => {
@@ -33,7 +34,7 @@ function ordenar(lista) {
   })
 }
 
-// "Todas" esconde as canceladas e as entregues há mais de 30 dias.
+// "Todas" esconde as entregues há mais de 30 dias e as canceladas.
 function filtrarTodas(lista) {
   const limite = Date.now() - TRINTA_DIAS
   return lista.filter(
@@ -43,33 +44,22 @@ function filtrarTodas(lista) {
 }
 
 export default function ListaOrdensPage() {
-  const navigate = useNavigate()
   const [parametros, setParametros] = useSearchParams()
-  const filtro = parametros.get('status') ?? '' // vem da URL: /ordens?status=PRONTA
-  const ehGarantia = filtro === 'GARANTIA'
-  const status = ehGarantia ? '' : filtro // Garantia não é status: o backend não conhece
+  const filtro = parametros.get('status') ?? ''
+  const garantia = filtro === FILTRO_GARANTIA.valor
+  const status = garantia ? '' : filtro
   const [texto, setTexto] = useState(parametros.get('busca') ?? '')
   const busca = useDebounce(texto.trim(), 300)
   const termo = busca.length >= 2 ? busca : '' // busca a partir de 2 caracteres
 
   const { dados, carregando, erro, recarregar } = useApi(async () => {
-    const recebidas = termo ? (await pesquisar(termo)).ordens : await listarOrdens({ status })
-    // A OS traz só `mecanico_id`; o nome vem da lista de mecânicos. Se essa lista falhar,
-    // a tela continua e o mecânico aparece como "A definir".
-    const mecanicos = await listarMecanicos().catch(() => [])
-    const nomes = Object.fromEntries(mecanicos.map((m) => [m.id, m.nome]))
-    // O backend manda `eh_garantia`; os componentes (TabelaOS) leem `garantia`.
-    const lista = recebidas.map((o) => ({
-      ...o,
-      mecanico: o.mecanico ?? nomes[o.mecanico_id] ?? null,
-      garantia: o.eh_garantia ?? o.garantia,
-    }))
-    let filtrada
-    if (ehGarantia) filtrada = lista.filter((o) => o.garantia)
-    else if (status) filtrada = lista.filter((o) => o.status === status)
-    else filtrada = filtrarTodas(lista)
-    return ordenar(filtrada)
-  }, [filtro, termo])
+    // Com busca: a pesquisa geral acha por placa, cliente ou nº da OS; os filtros são aplicados aqui.
+    let lista = termo ? (await pesquisar(termo)).ordens : await listarOrdens({ status, garantia })
+    if (termo && status) lista = lista.filter((o) => o.status === status)
+    if (termo && garantia) lista = lista.filter((o) => o.eh_garantia)
+    if (!status && !garantia && !termo) lista = filtrarTodas(lista)
+    return ordenar(lista)
+  }, [status, garantia, termo])
 
   const exportar = useAcao(exportarOrdensCSV)
 
@@ -86,15 +76,13 @@ export default function ListaOrdensPage() {
   }
 
   let lista
-  if (carregando)
-    lista = (
-      <EstadoCarregando formato="tabela" formatoCelular="cartoes" linhas={5} colunas={5} texto="Carregando ordens..." />
-    )
+  if (carregando) lista = <EstadoCarregando texto="Carregando ordens..." />
   else if (erro) lista = <EstadoErro mensagem={erro.message} onTentarDeNovo={recarregar} />
   else if (dados.length === 0)
     lista = (
       <EstadoVazio
         titulo="Nenhuma OS encontrada"
+        texto={filtro || termo ? 'Tente outro filtro ou outra busca.' : 'As ordens abertas aparecem aqui.'}
         acao={
           filtro || termo ? (
             <Botao variante="secundario" onClick={limparFiltros}>
@@ -113,11 +101,11 @@ export default function ListaOrdensPage() {
       <>
         <div className="lista-cartoes-os so-celular">
           {dados.map((os) => (
-            <CartaoOS key={os.id} ordem={os} para={`/ordens/${os.id}`} />
+            <CartaoOS key={os.id} ordem={os} />
           ))}
         </div>
         <div className="so-pc">
-          <TabelaOS ordens={dados} onClicar={(os) => navigate(`/ordens/${os.id}`)} />
+          <TabelaOS ordens={dados} />
         </div>
       </>
     )
@@ -126,13 +114,14 @@ export default function ListaOrdensPage() {
     <>
       <CabecalhoPagina
         titulo="Ordens de serviço"
+        tituloCelular="Ordens"
         acoes={
           <>
             <Botao
               variante="secundario"
               icone={Download}
               carregando={exportar.executando}
-              onClick={() => exportar.executar({ status, placa: termo })}
+              onClick={() => exportar.executar({ status, garantia, placa: termo })}
             >
               Exportar
             </Botao>
@@ -143,8 +132,8 @@ export default function ListaOrdensPage() {
         }
       />
       <div className="pagina">
-        <div className="pilha">
-          <div className="so-celular">
+        <div className="ordens__barra">
+          <div className="ordens__busca">
             <BarraBusca valor={texto} onChange={setTexto} placeholder="Placa, cliente ou nº da OS" />
           </div>
           <div className="so-pc">

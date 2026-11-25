@@ -1,3 +1,9 @@
+// Cartão de indicador do Painel / Início (Figma "Componentes > Indicador"). Integrante 6.
+// Clicável quando recebe `para` (link) ou `onClick`: abre a lista já filtrada.
+//
+//   <Indicador titulo="Em serviço" valor={12} apoio="3 entram hoje" icone={Wrench}
+//              para="/ordens?status=EM_SERVICO" />
+//   <Indicador titulo="Faturado no mês" carregando />
 import { Link } from 'react-router-dom'
 import './ui.css'
 

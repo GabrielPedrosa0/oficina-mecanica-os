@@ -2,8 +2,9 @@
 // Rotas em backend/routers/ordens_servico.py, acoes_os.py e exportacao.py.
 import { apiBaixarArquivo, apiDelete, apiGet, apiPatch, apiPost, apiPut, montarQuery } from './api'
 
-// GET /api/ordens-servico?status=&placa=&cliente=  (filtros opcionais e combináveis)
-export const listarOrdens = ({ status, placa, cliente } = {}) => apiGet('/ordens-servico', { status, placa, cliente })
+// GET /api/ordens-servico?status=&placa=&cliente=&garantia=true  (filtros opcionais e combináveis)
+export const listarOrdens = ({ status, placa, cliente, garantia } = {}) =>
+  apiGet('/ordens-servico', { status, placa, cliente, garantia: garantia ? 'true' : undefined })
 
 // GET /api/ordens-servico/1042
 export const consultarOrdem = (id) => apiGet(`/ordens-servico/${id}`)
@@ -18,12 +19,15 @@ export const atualizarOrdem = (id, dados) => apiPut(`/ordens-servico/${id}`, dad
 export const excluirOrdem = (id) => apiDelete(`/ordens-servico/${id}`)
 
 // GET /api/ordens-servico/exportar  (CSV com os mesmos filtros da lista)
-export const exportarOrdensCSV = ({ status, placa, cliente } = {}) =>
-  apiBaixarArquivo(`/ordens-servico/exportar${montarQuery({ status, placa, cliente })}`, 'ordens-servico.csv')
+export const exportarOrdensCSV = ({ status, placa, cliente, garantia } = {}) =>
+  apiBaixarArquivo(
+    `/ordens-servico/exportar${montarQuery({ status, placa, cliente, garantia: garantia ? 'true' : undefined })}`,
+    'ordens-servico.csv',
+  )
 
 // ---- Ações (Integrante 3, backend/routers/acoes_os.py) ----
 
-// PATCH /api/ordens-servico/1042/status  { status, motivo? }  (motivo hoje o backend ignora; pedido na tela ao CANCELADA)
+// PATCH /api/ordens-servico/1042/status  { status, motivo? }  (motivo obrigatório para CANCELADA)
 export const mudarStatus = (id, status, motivo) =>
   apiPatch(`/ordens-servico/${id}/status`, { status, ...(motivo ? { motivo } : {}) })
 

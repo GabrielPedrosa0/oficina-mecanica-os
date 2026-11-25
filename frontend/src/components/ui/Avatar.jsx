@@ -1,3 +1,5 @@
+// Avatar redondo com as iniciais (Figma "Placa e avatar"). Integrante 6.
+//   <Avatar nome="Marina Souza" />  ->  MS        <Avatar nome="Usuário" tamanho={40} />
 import { iniciais } from '../../utils/formatadores'
 import './ui.css'
 

@@ -1,0 +1,10 @@
+/* Agenda. Integrante 4. */
+.agenda__dia {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--espaco-2);
+  flex-wrap: wrap;
+}
+.agenda__total {
+  margin: 0;
+}

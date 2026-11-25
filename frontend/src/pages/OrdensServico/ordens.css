@@ -1,0 +1,131 @@
+/* Telas de ordens de serviço: lista, nova OS e detalhe. Integrantes 2 e 3. */
+
+/* ------------------------------------------------------------ Lista */
+.ordens__barra {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+.ordens__busca {
+  max-width: 480px;
+}
+
+/* --------------------------------------------------------- Nova OS */
+.nova-os {
+  max-width: 960px;
+}
+.nova-os__veiculo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-3);
+  flex-wrap: wrap;
+}
+.nova-os__nota {
+  margin: 0;
+  font-size: 13px;
+  color: var(--texto-apoio);
+}
+
+/* --------------------------------------------------- Detalhe da OS */
+.detalhe-os {
+  gap: var(--espaco-4);
+  max-width: 1120px;
+}
+.detalhe-os__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-3);
+  flex-wrap: wrap;
+}
+.detalhe-os__topo-esquerda {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  flex-wrap: wrap;
+}
+.detalhe-os__grade {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--espaco-4);
+  align-items: start;
+}
+.detalhe-os__duas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espaco-3);
+}
+.detalhe-os__chassi {
+  font-family: var(--fonte-mono);
+  font-size: 14px;
+  letter-spacing: 0.3px;
+}
+.detalhe-os__telefone {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--texto-primario);
+  font-weight: 500;
+}
+.detalhe-os__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-2);
+}
+.detalhe-os__orcamento {
+  margin: 0;
+  padding: var(--espaco-3);
+  white-space: pre-wrap;
+  font: 400 14px/20px var(--fonte-texto);
+  background: var(--fundo-sutil);
+  border-radius: var(--raio-m);
+}
+.detalhe-os__impressao {
+  display: none;
+}
+@media (max-width: 899px) {
+  .detalhe-os__grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Celular: dados em cima, depois serviços/peças e apontamentos (ordem do Figma). */
+  .detalhe-os__dados {
+    order: -1;
+  }
+}
+
+/* Impressão: só os dados da OS, itens e total. Sem menu, abas e botões. */
+@media print {
+  .menu-lateral,
+  .barra-superior,
+  .barra-abas,
+  .rodape-acoes,
+  .cabecalho-pagina__acoes,
+  .cabecalho-pagina__voltar,
+  .itens-os__adicionar,
+  .itens-os__acoes,
+  .apontamentos .itens-os__adicionar,
+  .detalhe-os__outras,
+  .aviso {
+    display: none !important;
+  }
+  body,
+  .layout,
+  .layout__principal,
+  .layout__conteudo {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: var(--branco) !important;
+  }
+  .detalhe-os__impressao {
+    display: block;
+    margin: 0 0 8px;
+  }
+  .detalhe-os__grade {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cartao {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+}

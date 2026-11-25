@@ -1,0 +1,16 @@
+/* Veículos: lista e formulário. Integrante 1. */
+.veiculos__busca {
+  max-width: 480px;
+}
+.veiculos__chassi {
+  font: 400 13px/18px var(--fonte-mono);
+  color: var(--texto-secundario);
+}
+.form-veiculo {
+  max-width: 720px;
+}
+.form-veiculo__duas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espaco-3);
+}

@@ -100,11 +100,13 @@ def ordem_completa(ordem):
 
 # As OS que passam nos filtros (3.7), da mais recente para a mais antiga.
 # Usada pela listagem, pela busca geral e pela exportação.
-def listar_ordens(status=None, placa=None, cliente=None):
+def listar_ordens(status=None, placa=None, cliente=None, garantia=None):
     encontradas = []
     for ordem in ordem_servico_repository.listar():
         completa = ordem_completa(ordem)
         if status and completa["status"] != status:
+            continue
+        if garantia is not None and completa["eh_garantia"] != garantia:
             continue
         if placa and not placa_confere(completa["placa"], placa):
             continue

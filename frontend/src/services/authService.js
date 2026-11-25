@@ -1,54 +1,57 @@
-// Autenticação (especificação 3.8): entrar, sair e lembrar quem está logado.
-// O backend devolve { access_token, token_type, usuario } em POST /api/auth/login.
-// O token fica no localStorage (CHAVE_TOKEN) e o api.js já manda ele em "Authorization: Bearer".
-import { apiGet, apiPost, CHAVE_TOKEN, lerToken } from './api'
+// Autenticação (guia 3.8). Integrante 6. Rotas em backend/routers/autenticacao.py.
+// O token fica no localStorage e o api.js manda ele em todo pedido (Authorization: Bearer).
+import { CHAVE_TOKEN, CHAVE_USUARIO, apiGet, apiPost, lerToken } from './api'
 
-const CHAVE_USUARIO = 'oficina_usuario'
-
-// localStorage pode falhar (navegação anônima, iframe bloqueado): aí só não lembra o login.
-function gravar(chave, valor) {
-  try {
-    if (valor === null) localStorage.removeItem(chave)
-    else localStorage.setItem(chave, valor)
-  } catch {
-    /* sem armazenamento: segue sem lembrar */
-  }
-}
-
-// POST /api/auth/login -> guarda token e usuário. Devolve o usuário.
+// POST /api/auth/login  -> { access_token, token_type, usuario: { id, nome, email, perfil } }
 export async function entrar(email, senha) {
-  const resposta = await apiPost('/auth/login', { email: email.trim(), senha })
-  gravar(CHAVE_TOKEN, resposta.access_token)
-  gravar(CHAVE_USUARIO, JSON.stringify(resposta.usuario))
+  const resposta = await apiPost('/auth/login', { email, senha })
+  try {
+    localStorage.setItem(CHAVE_TOKEN, resposta.access_token)
+    localStorage.setItem(CHAVE_USUARIO, JSON.stringify(resposta.usuario))
+  } catch {
+    // sem localStorage o login vale só até recarregar a página
+  }
   return resposta.usuario
 }
 
-// Apaga a sessão guardada no navegador.
 export function sair() {
-  gravar(CHAVE_TOKEN, null)
-  gravar(CHAVE_USUARIO, null)
+  try {
+    localStorage.removeItem(CHAVE_TOKEN)
+    localStorage.removeItem(CHAVE_USUARIO)
+  } catch {
+    // nada a limpar
+  }
 }
 
-// POST /api/auth/esqueci-senha (responde igual exista o e-mail ou não).
-export function esqueciSenha(email) {
-  return apiPost('/auth/esqueci-senha', { email: email.trim() })
-}
-
-// GET /api/auth/me: confirma que o token ainda vale (401 se expirou).
-export function consultarUsuarioLogado() {
-  return apiGet('/auth/me')
-}
-
-export function estaLogado() {
-  return Boolean(lerToken())
-}
-
-// O usuário salvo no login, ou null.
+// O usuário salvo no último login (sem chamar o servidor). null se ninguém entrou.
 export function usuarioSalvo() {
   try {
-    const texto = localStorage.getItem(CHAVE_USUARIO)
-    return texto ? JSON.parse(texto) : null
+    return JSON.parse(localStorage.getItem(CHAVE_USUARIO))
   } catch {
     return null
   }
 }
+
+export const estaLogado = () => Boolean(lerToken())
+
+// GET /api/auth/me  (confere se o token ainda vale e atualiza o usuário salvo)
+export async function consultarUsuarioLogado() {
+  const usuario = await apiGet('/auth/me')
+  try {
+    localStorage.setItem(CHAVE_USUARIO, JSON.stringify(usuario))
+  } catch {
+    // sem localStorage, só não guarda
+  }
+  return usuario
+}
+
+// Perfil em maiúsculas, sem acento: 'ADMIN', 'RECEPCAO' ou 'MECANICO'.
+export function perfilDe(usuario) {
+  return String(usuario?.perfil ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+}
+
+// POST /api/auth/esqueci-senha  -> { mensagem } (a resposta é sempre a mesma)
+export const esqueciSenha = (email) => apiPost('/auth/esqueci-senha', { email })

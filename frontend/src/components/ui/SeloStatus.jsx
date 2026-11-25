@@ -1,3 +1,8 @@
+// Selo de status (Figma "Componentes > Selo de status"). Integrante 6.
+// Status sempre com texto, nunca só cor.
+//
+//   <SeloStatus status="EM_SERVICO" />        -> "Em serviço" em azul
+//   <Selo tom="sucesso">Garantia 90 dias</Selo>  (selo genérico, com o tom que quiser)
 import { dadosStatus } from '../../constants/statusOS'
 import './ui.css'
 

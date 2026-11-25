@@ -1,3 +1,13 @@
+// Cartão (superfície branca, borda e raio de 12 px) e Dado (rótulo + valor). Integrante 6.
+//
+//   <Cartao titulo="Serviços e peças" acao={<Botao variante="fantasma" icone={Plus}>Adicionar</Botao>}>
+//     ...
+//   </Cartao>
+//
+//   <GradeDados>
+//     <Dado rotulo="Entrada">Hoje, 08:10</Dado>
+//     <Dado rotulo="Quilometragem">82.300 km</Dado>
+//   </GradeDados>
 import './ui.css'
 
 export default function Cartao({ titulo, acao, semEspaco = false, className = '', children, ...resto }) {
